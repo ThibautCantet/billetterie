@@ -1,0 +1,71 @@
+plugins {
+	id 'java'
+	id 'war'
+	id 'org.springframework.boot' version '3.4.5'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.cantet.thibaut'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// https://mvnrepository.com/artifact/com.h2database/h2
+	testImplementation 'com.h2database:h2:2.3.232'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	// https://mvnrepository.com/artifact/io.rest-assured/rest-assured
+	testImplementation 'io.rest-assured:rest-assured:5.5.1'
+	// https://mvnrepository.com/artifact/io.cucumber/cucumber-java
+	testImplementation 'io.cucumber:cucumber-java:7.22.1'
+	// https://mvnrepository.com/artifact/io.cucumber/cucumber-junit-platform-engine
+	testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.22.1'
+	testImplementation 'io.cucumber:cucumber-junit:7.22.1'
+	// https://mvnrepository.com/artifact/org.junit.platform/junit-platform-suite
+	testImplementation("org.junit.platform:junit-platform-suite:1.12.2")
+	// https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api
+	testImplementation("org.junit.jupiter:junit-jupiter-api:5.12.2")
+	// https://mvnrepository.com/artifact/org.assertj/assertj-core
+	testImplementation 'org.assertj:assertj-core:3.27.3'
+	// https://mvnrepository.com/artifact/org.wiremock/wiremock-standalone
+	testImplementation 'org.wiremock:wiremock-standalone:3.9.1'
+	// https://mvnrepository.com/artifact/io.cucumber/cucumber-spring
+	implementation("io.cucumber:cucumber-spring:7.22.1")
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+configurations {
+	cucumberRuntime {
+		extendsFrom testImplementation
+	}
+}
+
+tasks.register('cucumberCli') {
+	dependsOn assemble, testClasses
+	doLast {
+		javaexec {
+			mainClass.set("io.cucumber.core.cli.Main")
+			classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
+			args = [
+							'--plugin', 'pretty',
+							'--plugin', 'html:build/target/cucumber-report.html',
+							'--glue', 'com.cantet.thibaut',
+							'src/test/resources']
+		}
+	}
+}
