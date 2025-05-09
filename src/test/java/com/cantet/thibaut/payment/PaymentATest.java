@@ -181,8 +181,8 @@ public class PaymentATest extends ATest {
                         """, transactionId))));
     }
 
-    @Alors("on reste le panier {string} de {int} euros")
-    public void onResteLePanierDeEuros(String cartId, float amount) {
+    @Alors("on reste sur le paiement {string} de {int} euros")
+    public void onResteSurLePaiementDeEuros(String cartId, float amount) {
         response
                 .then()
                 .log().all()
