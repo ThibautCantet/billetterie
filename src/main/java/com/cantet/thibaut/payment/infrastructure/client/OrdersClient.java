@@ -2,6 +2,7 @@ package com.cantet.thibaut.payment.infrastructure.client;
 
 import com.cantet.thibaut.payment.domain.Order;
 import com.cantet.thibaut.payment.domain.Orders;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -12,6 +13,9 @@ import org.springframework.web.client.RestTemplate;
 @Component
 public class OrdersClient implements Orders {
 
+    @Value(value = "${orders.url}")
+    private String ordersUrl;
+
     private final RestTemplate restTemplate;
 
     public OrdersClient() {
@@ -20,7 +24,7 @@ public class OrdersClient implements Orders {
 
     @Override
     public Order transformToOrder(String cartId, float amount) {
-        String url = "http://localhost:12346/orders";
+        String url = ordersUrl + "/orders";
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Content-Type", "application/json");

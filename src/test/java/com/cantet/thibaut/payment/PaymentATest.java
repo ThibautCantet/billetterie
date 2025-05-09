@@ -30,6 +30,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
@@ -50,6 +51,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @ExtendWith(WireMockExtension.class)
 @RunWith(Cucumber.class)
 @CucumberOptions(features = "classpath:Feature")
+@ActiveProfiles("test")
 public class PaymentATest extends ATest {
 
     private static final int PORT = 12346;

@@ -1,0 +1,5 @@
+bank:
+  url: http://localhost:12346
+
+orders:
+  url: http://localhost:12346
