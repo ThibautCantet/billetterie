@@ -23,7 +23,7 @@ public class PayAndTransformToOrder {
     public PayAndTransformToOrderResult execute(String cartId, String cardNumber, String expirationDate, String cypher, float amount) {
         Transaction transaction = bank.pay(new Payment(cardNumber, expirationDate, cypher, amount));
 
-        if (transaction.status() != SUCCESS) {
+        if (!transaction.hasSucceeded()) {
             return new PayAndTransformToOrderResult(
                     transaction.status(),
                     transaction.id(),

@@ -158,8 +158,8 @@ public class PaymentATest extends ATest {
         ;
     }
 
-    @Etque("la banque ne valide le paiement {string} sans 3DS")
-    public void laBanqueNeValideLePaiementSansDS(String transactionId) {
+    @Etque("la banque ne valide pas le paiement {string} sans 3DS")
+    public void laBanqueNeValidePasLePaiementSansDS(String transactionId) {
         wireMockServer.stubFor(post(urlEqualTo("/bank/payments/"))
                 .withHeader(HttpHeaders.CONTENT_TYPE, equalTo("application/json"))
                 .withRequestBody(equalToJson(String.format("""
@@ -196,5 +196,37 @@ public class PaymentATest extends ATest {
     public void lePanierNAPasÉtéTransforméEnCommande(String cartId) {
         wireMockServer.verify(0, postRequestedFor(urlPathEqualTo("/orders"))
                 .withHeader(HttpHeaders.CONTENT_TYPE, equalTo("application/json")));
+    }
+
+    @Etque("le panier {string} n'est pas transformé en commande")
+    public void lePanierNEstPasTransforméEnCommande(String cartId) {
+        wireMockServer.stubFor(post(urlPathEqualTo("/orders"))
+                .withHeader(HttpHeaders.CONTENT_TYPE, equalTo("application/json"))
+                .withRequestBody(equalToJson(String.format("""
+                        {
+                            "cartId": "%s",
+                            "amount": "%s"
+                        }
+                        """, cartId, cartDto.amount())))
+                .willReturn(okJson("""
+                        {
+                          "status": "ko"
+                        }
+                        """)));
+    }
+
+    @Etque("on la transaction bancaire {string} est annulée")
+    public void onLaTransactionBancaireEstAnnulée(String transactionId) {
+        wireMockServer.stubFor(delete(urlEqualTo("/bank/payments/" + transactionId))
+                .willReturn(okJson("""
+                        {
+                          "status": "ok"
+                        }
+                        """)));
+    }
+
+    @Et("on a bien annulé la transaction bancaire {string}")
+    public void onABienAnnuléLaTransactionBancaire(String transactionId) {
+        wireMockServer.verify(1, deleteRequestedFor(urlEqualTo("/bank/payments/" + transactionId)));
     }
 }
