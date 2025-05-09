@@ -42,4 +42,9 @@ public class BankClient implements Bank {
         }
     }
 
+    @Override
+    public boolean cancel(String transactionId) {
+        return false;
+    }
+
 }
