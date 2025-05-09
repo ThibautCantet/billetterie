@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import static com.cantet.thibaut.payment.domain.PaymentStatus.*;
+
 @RestController
 @RequestMapping(PaymentController.PATH)
 public class PaymentController {
@@ -28,6 +30,11 @@ public class PaymentController {
                 paymentDto.creditCardDto().expirationDate(),
                 paymentDto.creditCardDto().cypher(),
                 paymentDto.cartDto().amount());
+
+        if (result.status() == FAILED) {
+            return new PaymentResultDto(result.status());
+        }
+
         return new PaymentResultDto(
                 result.status(),
                 result.orderId(),

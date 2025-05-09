@@ -59,7 +59,6 @@ public class PaymentATest extends ATest {
 
     private final WireMockConfiguration port = options().port(PORT);
     private final WireMockServer wireMockServer = new WireMockServer(port);
-    private String transactionId;
 
     @Before
     public void setUpBefore() {
@@ -107,7 +106,6 @@ public class PaymentATest extends ATest {
 
     @Etque("la banque valide le paiement {string} sans 3DS")
     public void laBanqueValideLePaiementSansDS(String transactionId) {
-        this.transactionId = transactionId;
         wireMockServer.stubFor(post(urlEqualTo("/bank/payments/"))
                 .withHeader(HttpHeaders.CONTENT_TYPE, equalTo("application/json"))
                 .withRequestBody(equalToJson(String.format("""
@@ -139,14 +137,15 @@ public class PaymentATest extends ATest {
                         """, cartId, cartDto.amount())))
                 .willReturn(okJson("""
                         {
+                          "status": "ok",
                           "id": "%s",
                           "amount": "%s"
                         }
                         """.formatted(orderId, cartDto.amount()))));
     }
 
-    @Alors("on obtient une commande {string} d'un montant de {float} euros")
-    public void onObtientUneCommandeDUnMontantDeEuros(String orderId, float amount) {
+    @Alors("on obtient une commande {string} d'un montant de {float} euros avec la transaction bancaire {string}")
+    public void onObtientUneCommandeDUnMontantDeEuros(String orderId, float amount, String transactionId) {
         response
                 .then()
                 .log().all()
@@ -157,5 +156,45 @@ public class PaymentATest extends ATest {
                 .body("redirectUrl", is("confirmation"))
                 .body("amount", is(amount))
         ;
+    }
+
+    @Etque("la banque ne valide le paiement {string} sans 3DS")
+    public void laBanqueNeValideLePaiementSansDS(String transactionId) {
+        wireMockServer.stubFor(post(urlEqualTo("/bank/payments/"))
+                .withHeader(HttpHeaders.CONTENT_TYPE, equalTo("application/json"))
+                .withRequestBody(equalToJson(String.format("""
+                        {
+                            "cardNumber": "%s",
+                            "expirationDate": "%s",
+                            "cypher": "%s",
+                            "amount": "%s"
+                        }
+                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.amount())))
+                .willReturn(okJson(String.format("""
+                        {
+                          "id": "%s",
+                          "status": "ko",
+                          "redirectionUrl": "null"
+                        }
+                        """, transactionId))));
+    }
+
+    @Alors("on reste le panier {string} de {int} euros")
+    public void onResteLePanierDeEuros(String cartId, float amount) {
+        response
+                .then()
+                .log().all()
+                .statusCode(200)
+                .body("status", is("FAILED"))
+                .body("id", is(nullValue()))
+                .body("transactionId", is(nullValue()))
+                .body("redirectUrl", is(nullValue()))
+                .body("amount", is(nullValue()));
+    }
+
+    @Et("le panier {string} n'a pas été transformé en commande")
+    public void lePanierNAPasÉtéTransforméEnCommande(String cartId) {
+        wireMockServer.verify(0, postRequestedFor(urlPathEqualTo("/orders"))
+                .withHeader(HttpHeaders.CONTENT_TYPE, equalTo("application/json")));
     }
 }

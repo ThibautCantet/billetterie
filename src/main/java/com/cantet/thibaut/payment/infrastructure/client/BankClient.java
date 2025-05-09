@@ -28,14 +28,14 @@ public class BankClient implements Bank {
         HttpEntity<Object> request = new HttpEntity<>(new PaymentRequest(payment), headers);
 
         try {
-            ResponseEntity<Transaction> response = restTemplate.exchange(
+            ResponseEntity<TransactionResponse> response = restTemplate.exchange(
                     url,
                     HttpMethod.POST,
                     request,
-                    Transaction.class
+                    TransactionResponse.class
             );
 
-            return response.getBody();
+            return response.getBody().toTransaction();
         } catch (Exception e) {
             System.out.println(e.getMessage());
             return null;
