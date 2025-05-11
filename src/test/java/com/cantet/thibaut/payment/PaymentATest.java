@@ -231,4 +231,52 @@ public class PaymentATest extends ATest {
     public void onABienAnnuléLaTransactionBancaire(String transactionId) {
         wireMockServer.verify(1, deleteRequestedFor(urlEqualTo("/bank/payments/" + transactionId)));
     }
+
+    @Etque("la banque valide le paiement {string} avec 3DS")
+    public void laBanqueValideLePaiementAvecDS(String transactionId) {
+        wireMockServer.stubFor(post(urlEqualTo("/bank/payments/"))
+                .withHeader(HttpHeaders.CONTENT_TYPE, equalTo("application/json"))
+                .withRequestBody(equalToJson(String.format("""
+                        {
+                            "cardNumber": "%s",
+                            "expirationDate": "%s",
+                            "cypher": "%s",
+                            "amount": "%s"
+                        }
+                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.amount())))
+                .willReturn(okJson(String.format("""
+                        {
+                          "id": "%s",
+                          "status": "ok",
+                          "redirectionUrl": "/3ds"
+                        }
+                        """, transactionId))));
+    }
+
+    @Quand("on revient sur la billetterie avec la transaction bancaire {string}")
+    public void onRevientSurLaBilletterie(String transactionId) {
+        //@formatter:off
+        response = RestAssured.given()
+                .log().all()
+                .header("Content-Type", ContentType.JSON)
+                .body(new PaymentDto(cartDto, creditCardDto))
+        .when()
+                .get("/cart/confirmation?transactionId=" + transactionId
+                     + "&status=ok&cartId=" + cartDto.id()
+                     + "&amount=" + cartDto.amount());
+        //@formatter:on
+    }
+
+    @Alors("on revient sur le paiement avec le panier {string} de {float} euros")
+    public void onRevientSurLePaiementAvecLePanierDeEuros(String cartId, float amount) {
+        response
+                .then()
+                .log().all()
+                .statusCode(200)
+                .body("status", is("FAILED"))
+                .body("id", is(nullValue()))
+                .body("transactionId", is(nullValue()))
+                .body("redirectUrl", is("/cart?error=true&cartId=" + cartId + "&amount=" + amount))
+                .body("amount", is(amount));
+    }
 }

@@ -6,7 +6,9 @@ import com.cantet.thibaut.payment.domain.Order;
 import com.cantet.thibaut.payment.domain.Orders;
 import com.cantet.thibaut.payment.domain.TransformToOrderResult;
 import com.cantet.thibaut.payment.domain.TransformToOrderStatus;
+import org.springframework.stereotype.Service;
 
+@Service
 public class TransformToOrder {
     private final Orders orders;
     private final Bank bank;
