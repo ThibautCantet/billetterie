@@ -60,6 +60,12 @@ public class PaymentController {
         if (result.status() == TransformToOrderStatus.FAILED) {
             return new PaymentResultDto(FAILED, null, amount, null, "/cart?error=true&cartId=" + cartId + "&amount=" + amount);
         }
-        return null;
+
+        return new PaymentResultDto(
+                SUCCESS,
+                result.orderId(),
+                result.amount(),
+                result.transactionId(),
+                result.redirectUrl());
     }
 }
