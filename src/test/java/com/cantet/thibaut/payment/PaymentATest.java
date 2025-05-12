@@ -5,6 +5,7 @@ import com.cantet.thibaut.payment.infrastructure.controller.PaymentController;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.CartDto;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.CreditCardDto;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentDto;
+import com.cantet.thibaut.payment.infrastructure.service.EmailCustomerSupport;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
@@ -22,6 +23,8 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
@@ -31,6 +34,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
@@ -61,6 +65,9 @@ public class PaymentATest extends ATest {
 
     private final WireMockConfiguration port = options().port(PORT);
     private final WireMockServer wireMockServer = new WireMockServer(port);
+
+    @MockitoSpyBean
+    private EmailCustomerSupport emailCustomerSupport;
 
     @Before
     public void setUpBefore() {
@@ -278,5 +285,20 @@ public class PaymentATest extends ATest {
                 .body("transactionId", is(nullValue()))
                 .body("redirectUrl", is("/cart?error=true&cartId=" + cartId + "&amount=" + amount))
                 .body("amount", is(amount));
+    }
+
+    @Etque("on la transaction bancaire {string} n'est pas annulée")
+    public void onLaTransactionBancaireNEstPasAnnulée(String transactionId) {
+        wireMockServer.stubFor(delete(urlEqualTo("/bank/payments/" + transactionId))
+                .willReturn(okJson("""
+                        {
+                          "status": "ko"
+                        }
+                        """)));
+    }
+
+    @Et("le support client est notifié qu'il faut annuler la transaction bancaire {string} à la main")
+    public void leSupportClientEstNotifiéQuIlFautAnnulerLaTransactionBancaireÀLaMain(String transactionId) {
+        Mockito.verify(emailCustomerSupport).alertTransactionFailure(transactionId, cartDto.id(), cartDto.amount());
     }
 }

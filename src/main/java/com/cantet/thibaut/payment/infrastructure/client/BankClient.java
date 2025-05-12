@@ -58,7 +58,7 @@ public class BankClient implements Bank {
                     Boolean.class
             );
 
-            return response.getBody();
+            return Boolean.TRUE.equals(response.getBody());
         } catch (Exception e) {
             System.out.println(e.getMessage());
             return false;
