@@ -30,7 +30,7 @@ public class PayAndTransformToOrder {
             return new PayAndTransformToOrderResult(
                     PENDING,
                     transaction.id(),
-                    "/3ds",
+                    transaction.redirectionUrl(),
                     null,
                     amount);
         }

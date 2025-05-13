@@ -3,6 +3,7 @@ package com.cantet.thibaut.payment.infrastructure.controller;
 import java.net.URI;
 
 import com.cantet.thibaut.payment.domain.PayAndTransformToOrderResult;
+import com.cantet.thibaut.payment.domain.TransformToOrderResult;
 import com.cantet.thibaut.payment.domain.TransformToOrderStatus;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentDto;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentResultDto;
@@ -60,22 +61,32 @@ public class PaymentController {
             @RequestParam(name = "status") String status,
             @RequestParam(name = "cartId") String cartId,
             @RequestParam(name = "amount") Float amount) {
-        var result = transformToOrder.execute(transactionId, cartId, amount);
-
-        var headers = new HttpHeaders();
         PaymentResultDto response;
-        if (result.status() == TransformToOrderStatus.FAILED) {
-            response = new PaymentResultDto(FAILED, null, amount, null, "/cart?error=true&cartId=" + cartId + "&amount=" + amount);
-            headers.setLocation(URI.create("/cart?error=true&cartId=" + cartId + "&amount=" + amount));
+        TransformToOrderResult result;
+        var headers = new HttpHeaders();
+        if (status.equals("ko")) {
+            response = redirectToCartOnError(amount, cartId, headers);
         } else {
-            headers.setLocation(URI.create(result.redirectUrl()));
-            response = new PaymentResultDto(
-                    SUCCESS,
-                    result.orderId(),
-                    result.amount(),
-                    result.transactionId(),
-                    result.redirectUrl());
+            result = transformToOrder.execute(transactionId, cartId, amount);
+
+            if (result.status() == TransformToOrderStatus.FAILED) {
+                response = redirectToCartOnError(amount, cartId, headers);
+            } else {
+                headers.setLocation(URI.create(result.redirectUrl()));
+                response = new PaymentResultDto(
+                        SUCCESS,
+                        result.orderId(),
+                        result.amount(),
+                        result.transactionId(),
+                        result.redirectUrl());
+            }
         }
         return new ResponseEntity<>(response, headers, HttpStatusCode.valueOf(301));
+    }
+
+    private static PaymentResultDto redirectToCartOnError(Float amount, String cartId, HttpHeaders headers) {
+        var response = new PaymentResultDto(FAILED, null, amount, null, "/cart?error=true&cartId=" + cartId + "&amount=" + amount);
+        headers.setLocation(URI.create("/cart?error=true&cartId=" + cartId + "&amount=" + amount));
+        return response;
     }
 }

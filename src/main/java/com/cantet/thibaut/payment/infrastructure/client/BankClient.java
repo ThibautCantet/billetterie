@@ -24,7 +24,7 @@ public class BankClient implements Bank {
     }
 
     public Transaction pay(Payment payment) {
-        String url = bankUrl + "/bank/payments/";
+        String url = bankUrl + "/bank/payments";
 
         var headers = new HttpHeaders();
         headers.set("Content-Type", "application/json");

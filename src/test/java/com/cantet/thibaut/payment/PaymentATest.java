@@ -112,9 +112,21 @@ public class PaymentATest extends ATest {
         //@formatter:on
     }
 
+    @Alors("on a une redirection vers la banque avec la transaction bancaire {string}")
+    public void onAUneRedirectionVersLaBanque(String transactionId) {
+        response.then()
+                .log().all()
+                .statusCode(200)
+                .body("status", is("PENDING"))
+                .body("amount", is(cartDto.amount()))
+                .body("id", is(nullValue()))
+                .body("transactionId", is(transactionId))
+                .body("redirectUrl", is("/bank/payments/3ds"));
+    }
+
     @Etque("la banque valide le paiement {string} sans 3DS")
     public void laBanqueValideLePaiementSansDS(String transactionId) {
-        wireMockServer.stubFor(post(urlEqualTo("/bank/payments/"))
+        wireMockServer.stubFor(post(urlEqualTo("/bank/payments"))
                 .withHeader(HttpHeaders.CONTENT_TYPE, equalTo("application/json"))
                 .withRequestBody(equalToJson(String.format("""
                         {
@@ -164,7 +176,7 @@ public class PaymentATest extends ATest {
 
     @Etque("la banque ne valide pas le paiement {string} sans 3DS")
     public void laBanqueNeValidePasLePaiementSansDS(String transactionId) {
-        wireMockServer.stubFor(post(urlEqualTo("/bank/payments/"))
+        wireMockServer.stubFor(post(urlEqualTo("/bank/payments"))
                 .withHeader(HttpHeaders.CONTENT_TYPE, equalTo("application/json"))
                 .withRequestBody(equalToJson(String.format("""
                         {
@@ -234,9 +246,9 @@ public class PaymentATest extends ATest {
         wireMockServer.verify(1, deleteRequestedFor(urlEqualTo("/bank/payments/" + transactionId)));
     }
 
-    @Etque("la banque valide le paiement {string} avec 3DS")
+    @Etque("la banque fait une redirection 3DS pour un transaction bancaire {string}")
     public void laBanqueValideLePaiementAvecDS(String transactionId) {
-        wireMockServer.stubFor(post(urlEqualTo("/bank/payments/"))
+        wireMockServer.stubFor(post(urlEqualTo("/bank/payments"))
                 .withHeader(HttpHeaders.CONTENT_TYPE, equalTo("application/json"))
                 .withRequestBody(equalToJson(String.format("""
                         {
@@ -249,14 +261,35 @@ public class PaymentATest extends ATest {
                 .willReturn(okJson(String.format("""
                         {
                           "id": "%s",
-                          "status": "ok",
-                          "redirectionUrl": "/3ds"
+                          "status": "PENDING",
+                          "redirectionUrl": "/bank/payments/3ds"
                         }
                         """, transactionId))));
     }
 
-    @Quand("on revient sur la billetterie avec la transaction bancaire {string}")
-    public void onRevientSurLaBilletterie(String transactionId) {
+    @Etque("la validation du paiement 3DS {string} est {string}")
+    public void laValidationDuPaiementDSEstKO(String transactionId, String status) {
+        wireMockServer.stubFor(post(urlEqualTo("/bank/payments"))
+                .withHeader(HttpHeaders.CONTENT_TYPE, equalTo("application/json"))
+                .withRequestBody(equalToJson(String.format("""
+                        {
+                            "cardNumber": "%s",
+                            "expirationDate": "%s",
+                            "cypher": "%s",
+                            "amount": "%s"
+                        }
+                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.amount())))
+                .willReturn(okJson(String.format("""
+                        {
+                          "id": "%s",
+                          "status": "%s",
+                          "redirectionUrl": "/api/payment/cart/confirmation?transactionId=%s&status=ko&cartId=%s&amount=%s"
+                        }
+                        """, transactionId, status, transactionId, cartDto.id(), cartDto.amount()))));
+    }
+
+    @Quand("on revient sur la billetterie avec la transaction bancaire {string} avec le status 3DS {string}")
+    public void onRevientSurLaBilletterie(String transactionId, String status) {
         //@formatter:off
         response = RestAssured.given()
                 .log().all()
@@ -264,7 +297,8 @@ public class PaymentATest extends ATest {
                 .body(new PaymentDto(cartDto, creditCardDto))
         .when()
                 .get("/cart/confirmation?transactionId=" + transactionId
-                     + "&status=ok&cartId=" + cartDto.id()
+                     + "&status=" + status
+                     + "&cartId=" + cartDto.id()
                      + "&amount=" + cartDto.amount());
         //@formatter:on
     }
