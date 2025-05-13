@@ -1,0 +1,47 @@
+package com.bank.controller;
+
+import java.net.URI;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping(BankController.PATH)
+public class BankController {
+
+    static final String PATH = "/api/bank";
+
+    @PostMapping("/payments")
+    public TransactionResponse pay(@RequestBody PaymentRequest request) {
+        if (request.cardNumber().contains("200")) {
+            return new TransactionResponse(request.cardNumber(), "ok", null);
+        } else if (request.cardNumber().contains("300")) {
+            return new TransactionResponse("312354645", "PENDING", PATH + "/payments/3ds");
+        }
+        return new TransactionResponse("312354645", "ko", null);
+    }
+
+    @GetMapping("/payments/3ds")
+    public ResponseEntity<Object> pay3ds(
+            @RequestParam(name = "status") String status,
+            @RequestParam(name = "cartId") String cartId,
+            @RequestParam(name = "amount") Float amount,
+            @RequestParam(name = "transactionId") String transactionId) {
+        var headers = new HttpHeaders();
+        if (status.equals("ok")) {
+            headers.setLocation(URI.create(
+                    String.format("http://localhost:8080/api/payment/cart/confirmation?transactionId=%s&status=ok&cartId=%s&amount=%s",
+                            transactionId, cartId, amount)));
+        } else {
+            headers.setLocation(URI.create("http://localhost:8080/cart?error=true&cartId=" + cartId + "&amount=" + amount));
+        }
+        return new ResponseEntity<>(headers, HttpStatusCode.valueOf(301));
+    }
+}

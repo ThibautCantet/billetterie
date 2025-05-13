@@ -1,1 +1,4 @@
 rootProject.name = 'billetterie'
+include 'back-office-billetterie'
+include 'bank'
+
