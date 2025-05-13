@@ -32,7 +32,7 @@ public class TransformToOrder {
             return new TransformToOrderResult(
                     TransformToOrderStatus.FAILED,
                     transactionId,
-                    "panier",
+                    "/panier",
                     null,
                     null);
         }
@@ -40,7 +40,7 @@ public class TransformToOrder {
         return new TransformToOrderResult(
                 TransformToOrderStatus.SUCCEEDED,
                 transactionId,
-                "confirmation",
+                String.format("/confirmation/%s?amount=%s", order.id(), amount),
                 order.id(),
                 amount);
     }

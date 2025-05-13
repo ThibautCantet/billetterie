@@ -28,4 +28,4 @@
         Et que la banque valide le paiement "324234243234" sans 3DS
         Et que le panier "1234567890123456" est transformé en commande "1234567890123456"
         Quand on valide le paiement
-        Alors on obtient une commande "1234567890123456" d'un montant de 100 euros avec la transaction bancaire "324234243234"
+        Alors on obtient une commande "1234567890123456" d'un montant de 100 euros

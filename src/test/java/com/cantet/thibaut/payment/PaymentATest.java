@@ -24,7 +24,6 @@ import io.restassured.http.ContentType;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
@@ -153,18 +152,14 @@ public class PaymentATest extends ATest {
                         """.formatted(orderId, cartDto.amount()))));
     }
 
-    @Alors("on obtient une commande {string} d'un montant de {float} euros avec la transaction bancaire {string}")
-    public void onObtientUneCommandeDUnMontantDeEuros(String orderId, float amount, String transactionId) {
+    @Alors("on obtient une commande {string} d'un montant de {float} euros")
+    public void onObtientUneCommandeDUnMontantDeEuros(String orderId, float amount) {
         response
                 .then()
                 .log().all()
                 .statusCode(200)
-                .body("status", is("SUCCESS"))
                 .body("id", is(orderId))
-                .body("transactionId", is(transactionId))
-                .body("redirectUrl", is("confirmation"))
-                .body("amount", is(amount))
-        ;
+                .body("amount", is(amount));
     }
 
     @Etque("la banque ne valide pas le paiement {string} sans 3DS")
@@ -280,10 +275,8 @@ public class PaymentATest extends ATest {
                 .then()
                 .log().all()
                 .statusCode(200)
-                .body("status", is("FAILED"))
-                .body("id", is(nullValue()))
-                .body("transactionId", is(nullValue()))
-                .body("redirectUrl", is("/cart?error=true&cartId=" + cartId + "&amount=" + amount))
+                .body("id", is(cartId))
+                .body("error", is(true))
                 .body("amount", is(amount));
     }
 

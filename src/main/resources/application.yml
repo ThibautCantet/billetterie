@@ -4,10 +4,14 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: create-drop
-  application:
-    name: cars
   datasource:
     driverClassName: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/billetterie
     username: user
     password: password
+
+bank:
+  url: http://localhost:8082/api
+
+orders:
+  url: http://localhost:8081/api

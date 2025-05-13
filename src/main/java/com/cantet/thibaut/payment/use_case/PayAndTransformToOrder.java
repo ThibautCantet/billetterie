@@ -55,7 +55,7 @@ public class PayAndTransformToOrder {
             return new PayAndTransformToOrderResult(
                     FAILED,
                     transaction.id(),
-                    "panier",
+                    "/panier",
                     null,
                     0);
         }
@@ -63,7 +63,7 @@ public class PayAndTransformToOrder {
         return new PayAndTransformToOrderResult(
                 SUCCESS,
                 transaction.id(),
-                "confirmation",
+                String.format("/confirmation/%s?amount=%s", order.id(), amount),
                 order.id(),
                 order.amount());
     }

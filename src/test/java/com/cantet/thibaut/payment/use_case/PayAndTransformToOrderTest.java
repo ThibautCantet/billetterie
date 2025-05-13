@@ -59,7 +59,7 @@ class PayAndTransformToOrderTest {
                         PayAndTransformToOrderResult::orderId,
                         PayAndTransformToOrderResult::redirectUrl,
                         PayAndTransformToOrderResult::amount)
-                .containsExactly(PaymentStatus.SUCCESS, "324234243234", ORDER_ID, "confirmation", AMOUNT);
+                .containsExactly(PaymentStatus.SUCCESS, "324234243234", ORDER_ID, "/confirmation/654654?amount=100.0", AMOUNT);
     }
 
     @Test
@@ -124,7 +124,7 @@ class PayAndTransformToOrderTest {
                         PayAndTransformToOrderResult::orderId,
                         PayAndTransformToOrderResult::redirectUrl,
                         PayAndTransformToOrderResult::amount)
-                .containsExactly(PaymentStatus.FAILED, TRANSACTION_ID, null, "panier", 0.0f);
+                .containsExactly(PaymentStatus.FAILED, TRANSACTION_ID, null, "/panier", 0.0f);
 
         verify(bank).cancel(TRANSACTION_ID);
 
@@ -153,7 +153,7 @@ class PayAndTransformToOrderTest {
                         PayAndTransformToOrderResult::orderId,
                         PayAndTransformToOrderResult::redirectUrl,
                         PayAndTransformToOrderResult::amount)
-                .containsExactly(PaymentStatus.FAILED, TRANSACTION_ID, null, "panier", 0.0f);
+                .containsExactly(PaymentStatus.FAILED, TRANSACTION_ID, null, "/panier", 0.0f);
 
         verify(bank).cancel(TRANSACTION_ID);
 

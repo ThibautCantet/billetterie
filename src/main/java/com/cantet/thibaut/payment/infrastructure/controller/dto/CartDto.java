@@ -1,4 +1,7 @@
 package com.cantet.thibaut.payment.infrastructure.controller.dto;
 
-public record CartDto(String id, float amount) {
+public record CartDto(String id, float amount, Boolean error) {
+    public CartDto(String id, float amount) {
+        this(id, amount, null);
+    }
 }
