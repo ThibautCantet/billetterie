@@ -234,6 +234,7 @@ public class PaymentATest extends ATest {
     @Etque("on la transaction bancaire {string} est annulée")
     public void onLaTransactionBancaireEstAnnulée(String transactionId) {
         wireMockServer.stubFor(delete(urlEqualTo("/bank/payments/" + transactionId))
+                .withQueryParam("amount", equalTo(String.valueOf(cartDto.amount())))
                 .willReturn(okJson("""
                         {
                           "status": "ok"
@@ -243,7 +244,8 @@ public class PaymentATest extends ATest {
 
     @Et("on a bien annulé la transaction bancaire {string}")
     public void onABienAnnuléLaTransactionBancaire(String transactionId) {
-        wireMockServer.verify(1, deleteRequestedFor(urlEqualTo("/bank/payments/" + transactionId)));
+        wireMockServer.verify(1, deleteRequestedFor(urlPathEqualTo("/bank/payments/" + transactionId))
+                .withQueryParam("amount", equalTo(String.valueOf(cartDto.amount()))));
     }
 
     @Etque("la banque fait une redirection 3DS pour un transaction bancaire {string}")
@@ -317,6 +319,7 @@ public class PaymentATest extends ATest {
     @Etque("on la transaction bancaire {string} n'est pas annulée")
     public void onLaTransactionBancaireNEstPasAnnulée(String transactionId) {
         wireMockServer.stubFor(delete(urlEqualTo("/bank/payments/" + transactionId))
+                .withQueryParam("amount", equalTo(String.valueOf(cartDto.amount())))
                 .willReturn(okJson("""
                         {
                           "status": "ko"

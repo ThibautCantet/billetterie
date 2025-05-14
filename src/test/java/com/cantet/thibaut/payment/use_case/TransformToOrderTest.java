@@ -58,7 +58,7 @@ public class TransformToOrderTest {
         var order = new Order(null, 0f);
         when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
 
-        when(bank.cancel(TRANSACTION_ID)).thenReturn(true);
+        when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(true);
 
         // when
         TransformToOrderResult result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT);
@@ -71,7 +71,7 @@ public class TransformToOrderTest {
                 TransformToOrderResult::amount)
                 .containsExactly(FAILED, TRANSACTION_ID, null, "/panier", null);
 
-        verify(bank).cancel(TRANSACTION_ID);
+        verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
         verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
     }
@@ -82,7 +82,7 @@ public class TransformToOrderTest {
         var order = new Order(null, 0f);
         when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
 
-        when(bank.cancel(TRANSACTION_ID)).thenReturn(false);
+        when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(false);
 
         // when
         TransformToOrderResult result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT);
@@ -95,7 +95,7 @@ public class TransformToOrderTest {
                 TransformToOrderResult::amount)
                 .containsExactly(FAILED, TRANSACTION_ID, null, "/panier", null);
 
-        verify(bank).cancel(TRANSACTION_ID);
+        verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
         verify(customerSupport).alertTransactionFailure(TRANSACTION_ID, CART_ID, AMOUNT);
     }

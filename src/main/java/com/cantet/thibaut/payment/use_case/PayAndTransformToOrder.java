@@ -56,7 +56,7 @@ public class PayAndTransformToOrder {
 
         if (order.isNotCompleted()) {
             LOGGER.warn("Cart not transformed to order: {}", cartId);
-            boolean cancel = bank.cancel(transaction.id());
+            boolean cancel = bank.cancel(transaction.id(), amount);
             if (!cancel) {
                 LOGGER.info("Transaction cancellation failed: {}", transaction.id());
                 customerSupport.alertTransactionFailure(transaction.id(), cartId, amount);

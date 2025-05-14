@@ -113,7 +113,7 @@ class PayAndTransformToOrderTest {
         var failedOrder = new Order(null, 0f);
         when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(failedOrder);
 
-        when(bank.cancel(TRANSACTION_ID)).thenReturn(true);
+        when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(true);
 
         // when
         var result = payAndTransformToOrder.execute(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT);
@@ -126,7 +126,7 @@ class PayAndTransformToOrderTest {
                         PayAndTransformToOrderResult::amount)
                 .containsExactly(PaymentStatus.FAILED, TRANSACTION_ID, null, "/panier", 0.0f);
 
-        verify(bank).cancel(TRANSACTION_ID);
+        verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
         verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
     }
@@ -142,7 +142,7 @@ class PayAndTransformToOrderTest {
         var failedOrder = new Order(null, 0f);
         when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(failedOrder);
 
-        when(bank.cancel(TRANSACTION_ID)).thenReturn(false);
+        when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(false);
 
         // when
         var result = payAndTransformToOrder.execute(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT);
@@ -155,7 +155,7 @@ class PayAndTransformToOrderTest {
                         PayAndTransformToOrderResult::amount)
                 .containsExactly(PaymentStatus.FAILED, TRANSACTION_ID, null, "/panier", 0.0f);
 
-        verify(bank).cancel(TRANSACTION_ID);
+        verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
         verify(customerSupport).alertTransactionFailure(TRANSACTION_ID, CART_ID, AMOUNT);
     }

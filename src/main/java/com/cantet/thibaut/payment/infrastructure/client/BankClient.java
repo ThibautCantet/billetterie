@@ -52,8 +52,8 @@ public class BankClient implements Bank {
     }
 
     @Override
-    public boolean cancel(String transactionId) {
-        String url = bankUrl + "/bank/payments/" + transactionId;
+    public boolean cancel(String transactionId, Float amount) {
+        String url = bankUrl + "/bank/payments/" + transactionId + "?amount=" + amount;
 
         try {
             ResponseEntity<Boolean> response = restTemplate.exchange(
