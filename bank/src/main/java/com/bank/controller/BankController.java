@@ -2,6 +2,8 @@ package com.bank.controller;
 
 import java.net.URI;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +19,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(BankController.PATH)
 public class BankController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(BankController.class);
 
     static final String PATH = "/api/bank";
 
     @PostMapping("/payments")
     public TransactionResponse pay(@RequestBody PaymentRequest request) {
+        if (request.isRejected()) {
+            return TransactionResponse.rejected();
+        }
         if (request.validationNotRequired()) {
             return TransactionResponse.withoutValidationAndCancelable();
         } else if (request.validationRequired()) {
@@ -30,9 +36,10 @@ public class BankController {
         return TransactionResponse.ko();
     }
 
-    @DeleteMapping("/payments/{transactionId}")
-    public Boolean cancel(@PathVariable(name = "transactionId") String transactionId) {
-        return transactionId.contains("11");
+    @DeleteMapping("/payments/{transactionId}?amount={amount}")
+    public Boolean cancel(@PathVariable(name = "transactionId") String transactionId,
+                          @RequestParam(name = "amount") Float amount) {
+        return amount > 1000f;
     }
 
     @GetMapping("/payments/3ds")
