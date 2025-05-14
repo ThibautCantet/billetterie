@@ -2,6 +2,8 @@ package com.cantet.thibaut.payment.infrastructure.client;
 
 import com.cantet.thibaut.payment.domain.Order;
 import com.cantet.thibaut.payment.domain.Orders;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -12,6 +14,8 @@ import org.springframework.web.client.RestTemplate;
 
 @Component
 public class OrdersClient implements Orders {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(OrdersClient.class);
 
     @Value(value = "${orders.url}")
     private String ordersUrl;
@@ -32,6 +36,7 @@ public class OrdersClient implements Orders {
         HttpEntity<Object> request = new HttpEntity<>(new OrderRequest(cartId, amount), headers);
 
         try {
+            LOGGER.debug("Transforming cart {} to order with amount {} with request {}", cartId, amount, request);
             ResponseEntity<OrderResponse> response = restTemplate.exchange(
                     url,
                     HttpMethod.POST,
@@ -41,7 +46,7 @@ public class OrdersClient implements Orders {
 
             return response.getBody().toOrder();
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            LOGGER.error("Error while transforming to order with request {}", request, e);
             return null;
         }
     }

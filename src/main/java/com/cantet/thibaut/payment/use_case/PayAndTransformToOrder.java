@@ -7,12 +7,16 @@ import com.cantet.thibaut.payment.domain.Orders;
 import com.cantet.thibaut.payment.domain.Payment;
 import com.cantet.thibaut.payment.domain.PayAndTransformToOrderResult;
 import com.cantet.thibaut.payment.domain.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import static com.cantet.thibaut.payment.domain.PaymentStatus.*;
 
 @Service
 public class PayAndTransformToOrder {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PayAndTransformToOrder.class);
+
     private final Bank bank;
     private final Orders orders;
     private final CustomerSupport customerSupport;
@@ -27,6 +31,7 @@ public class PayAndTransformToOrder {
         Transaction transaction = bank.pay(new Payment(cardNumber, expirationDate, cypher, amount));
 
         if (transaction.isPending()) {
+            LOGGER.info("Transaction is pending: {}", transaction.id());
             return new PayAndTransformToOrderResult(
                     PENDING,
                     transaction.id(),
@@ -36,6 +41,7 @@ public class PayAndTransformToOrder {
         }
 
         if (!transaction.hasSucceeded()) {
+            LOGGER.info("Transaction failed: {}", transaction.id());
             return new PayAndTransformToOrderResult(
                     transaction.status(),
                     transaction.id(),
@@ -44,11 +50,15 @@ public class PayAndTransformToOrder {
                     0);
         }
 
+        LOGGER.info("Transaction for cart id {} succeeded, with transaction id:{}", cartId, transaction.id());
+
         Order order = orders.transformToOrder(cartId, amount);
 
         if (order.isNotCompleted()) {
+            LOGGER.warn("Cart not transformed to order: {}", cartId);
             boolean cancel = bank.cancel(transaction.id());
             if (!cancel) {
+                LOGGER.info("Transaction cancellation failed: {}", transaction.id());
                 customerSupport.alertTransactionFailure(transaction.id(), cartId, amount);
             }
 
@@ -60,6 +70,7 @@ public class PayAndTransformToOrder {
                     0);
         }
 
+        LOGGER.info("Order transformation succeeded: {}", order.id());
         return new PayAndTransformToOrderResult(
                 SUCCESS,
                 transaction.id(),
