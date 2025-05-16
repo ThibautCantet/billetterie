@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panier</title>
+</head>
+<body>
+    <h1>Panier</h1>
+    <span th:if="${error}" class="red">Une erreur est survenue lors du paiement</span>
+    <p>Montant :<span th:text="${amount}"><strong>Montant :</strong> ${amount} €</span> €</p>
+</body>
+</html>

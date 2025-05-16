@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmation de commande</title>
+</head>
+<body>
+    <h1>Confirmation de commande</h1>
+    <p>Votre commande a été confirmée avec succès.</p>
+    <p>Numéro de la commande : <span th:text="${id}"><strong>ID de commande :</strong> ${id}</span></p>
+    <p>Montant : <span th:text="${amount}"><strong>Montant :</strong> ${amount} €</span> €</p>
+</body>
+</html>

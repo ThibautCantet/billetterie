@@ -28,26 +28,28 @@ public class PayAndTransformToOrder {
     }
 
     public PayAndTransformToOrderResult execute(String cartId, String cardNumber, String expirationDate, String cypher, float amount) {
-        Transaction transaction = bank.pay(new Payment(cardNumber, expirationDate, cypher, amount));
+        Transaction transaction = bank.pay(new Payment(cardNumber, expirationDate, cypher, cartId, amount));
 
         if (transaction.isPending()) {
-            LOGGER.info("Transaction is pending: {}", transaction.id());
-            return new PayAndTransformToOrderResult(
+            var pendingTransaction = new PayAndTransformToOrderResult(
                     PENDING,
                     transaction.id(),
                     transaction.redirectionUrl(),
                     null,
                     amount);
+            LOGGER.info("Transaction is pending: {}", pendingTransaction);
+            return pendingTransaction;
         }
 
         if (!transaction.hasSucceeded()) {
-            LOGGER.info("Transaction failed: {}", transaction.id());
-            return new PayAndTransformToOrderResult(
+            var failedTransaction = new PayAndTransformToOrderResult(
                     transaction.status(),
                     transaction.id(),
                     null,
                     null,
                     0);
+            LOGGER.info("Transaction failed: {}", failedTransaction);
+            return failedTransaction;
         }
 
         LOGGER.info("Transaction for cart id {} succeeded, with transaction id:{}", cartId, transaction.id());

@@ -21,6 +21,7 @@ import io.cucumber.junit.CucumberOptions;
 import io.cucumber.spring.CucumberContextConfiguration;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import org.assertj.core.api.AbstractObjectAssert;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -35,10 +36,12 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.assertj.core.api.Assertions.*;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.*;
 
@@ -166,12 +169,31 @@ public class PaymentATest extends ATest {
 
     @Alors("on obtient une commande {string} d'un montant de {float} euros")
     public void onObtientUneCommandeDUnMontantDeEuros(String orderId, float amount) {
-        response
+        String html = response
                 .then()
                 .log().all()
                 .statusCode(200)
-                .body("id", is(orderId))
-                .body("amount", is(amount));
+                .extract().asString();
+
+        assertThat(html)
+                .as("Confirmation HTML")
+                .isEqualTo(String.format("""
+                        <!DOCTYPE html>
+                        <html lang="fr" xmlns:sec="http://www.w3.org/1999/xhtml">
+                        
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <title>Confirmation de commande</title>
+                        </head>
+                        <body>
+                            <h1>Confirmation de commande</h1>
+                            <p>Votre commande a été confirmée avec succès.</p>
+                            <p>Numéro de la commande : <span>%s</span></p>
+                            <p>Montant :<span>%s</span> €</p>
+                        </body>
+                        </html>
+                        """, orderId, amount));
     }
 
     @Etque("la banque ne valide pas le paiement {string} sans 3DS")
@@ -257,9 +279,10 @@ public class PaymentATest extends ATest {
                             "cardNumber": "%s",
                             "expirationDate": "%s",
                             "cypher": "%s",
+                            "cartId": "%s",
                             "amount": "%s"
                         }
-                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.amount())))
+                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount())))
                 .willReturn(okJson(String.format("""
                         {
                           "id": "%s",
@@ -278,9 +301,10 @@ public class PaymentATest extends ATest {
                             "cardNumber": "%s",
                             "expirationDate": "%s",
                             "cypher": "%s",
+                            "cartId": "%s",
                             "amount": "%s"
                         }
-                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.amount())))
+                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount())))
                 .willReturn(okJson(String.format("""
                         {
                           "id": "%s",
@@ -307,13 +331,30 @@ public class PaymentATest extends ATest {
 
     @Alors("on revient sur le paiement avec le panier {string} de {float} euros")
     public void onRevientSurLePaiementAvecLePanierDeEuros(String cartId, float amount) {
-        response
+        var model = response
                 .then()
                 .log().all()
                 .statusCode(200)
-                .body("id", is(cartId))
-                .body("error", is(true))
-                .body("amount", is(amount));
+                .extract().asString();
+
+        assertThat(model)
+                .as("Html")
+                .isEqualTo(String.format("""
+                        <!DOCTYPE html>
+                        <html lang="fr" xmlns:sec="http://www.w3.org/1999/xhtml">
+                        
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <title>Panier</title>
+                        </head>
+                        <body>
+                            <h1>Panier</h1>
+                            <span class="red">Une erreur est survenue lors du paiement</span>
+                            <p>Montant :<span>%s</span> €</p>
+                        </body>
+                        </html>
+                        """, amount));
     }
 
     @Etque("on la transaction bancaire {string} n'est pas annulée")

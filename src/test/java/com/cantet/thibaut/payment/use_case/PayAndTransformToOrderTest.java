@@ -44,7 +44,7 @@ class PayAndTransformToOrderTest {
         // given
         var succeededTransaction = new Transaction(TRANSACTION_ID, PaymentStatus.SUCCESS, null);
 
-        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT)))
+        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, CART_ID, AMOUNT)))
                 .thenReturn(succeededTransaction);
 
         var order = new Order(ORDER_ID, AMOUNT);
@@ -67,7 +67,7 @@ class PayAndTransformToOrderTest {
         // given
         var transactionToValidate = new Transaction(TRANSACTION_ID, PaymentStatus.PENDING, "/3ds");
 
-        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT)))
+        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, CART_ID, AMOUNT)))
                 .thenReturn(transactionToValidate);
 
         // when
@@ -87,7 +87,7 @@ class PayAndTransformToOrderTest {
         // given
         var failedTransaction = new Transaction(TRANSACTION_ID, PaymentStatus.FAILED, null);
 
-        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT)))
+        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, CART_ID, AMOUNT)))
                 .thenReturn(failedTransaction);
 
         // when
@@ -107,7 +107,7 @@ class PayAndTransformToOrderTest {
         // given
         var succeededTransaction = new Transaction(TRANSACTION_ID, PaymentStatus.SUCCESS, null);
 
-        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT)))
+        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, CART_ID, AMOUNT)))
                 .thenReturn(succeededTransaction);
 
         var failedOrder = new Order(null, 0f);
@@ -136,7 +136,7 @@ class PayAndTransformToOrderTest {
         // given
         var succeededTransaction = new Transaction(TRANSACTION_ID, PaymentStatus.SUCCESS, null);
 
-        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT)))
+        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, CART_ID, AMOUNT)))
                 .thenReturn(succeededTransaction);
 
         var failedOrder = new Order(null, 0f);

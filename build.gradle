@@ -24,6 +24,7 @@ dependencies {
 	implementation 'org.postgresql:postgresql:42.7.5'
 	compileOnly 'org.projectlombok:lombok:1.18.38'
 	implementation 'org.projectlombok:lombok:1.18.38'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf:3.4.5'
 
 	testImplementation 'com.h2database:h2:2.3.232'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
