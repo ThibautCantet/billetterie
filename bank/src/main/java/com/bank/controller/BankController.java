@@ -23,6 +23,11 @@ public class BankController {
 
     static final String PATH = "/api/bank";
 
+    /**
+     * Pay the given payment request.
+     * @param request the payment request
+     * @return the transaction ok; ko; pending; rejected
+     */
     @PostMapping("/payments")
     public TransactionResponse pay(@RequestBody PaymentRequest request) {
         if (request.isRejected()) {
@@ -36,10 +41,16 @@ public class BankController {
         return TransactionResponse.ko();
     }
 
-    @DeleteMapping("/payments/{transactionId}?amount={amount}")
+    @DeleteMapping("/payments/{transactionId}")
     public Boolean cancel(@PathVariable(name = "transactionId") String transactionId,
                           @RequestParam(name = "amount") Float amount) {
-        return amount > 1000f;
+        boolean canceled = amount > 1000f;
+        if (canceled) {
+            LOGGER.info("Transaction {} canceled", transactionId);
+        } else {
+            LOGGER.warn("Transaction {} not canceled", transactionId);
+        }
+        return canceled;
     }
 
     @GetMapping("/payments/3ds")

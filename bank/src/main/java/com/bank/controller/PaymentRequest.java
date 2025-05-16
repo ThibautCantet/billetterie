@@ -4,6 +4,7 @@ public record PaymentRequest(
         String cardNumber,
         String expirationDate,
         String cypher,
+        String cartId,
         String amount
 ) {
     private static final Float NO_VALIDATION_REQUIRED = 100f;

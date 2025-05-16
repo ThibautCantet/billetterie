@@ -4,8 +4,6 @@ package com.bank.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.bank.controller.BankController.*;
-
 public record TransactionResponse(String id, String status, String redirectionUrl) {
     private static final Logger LOGGER = LoggerFactory.getLogger(TransactionResponse.class);
 
@@ -28,7 +26,15 @@ public record TransactionResponse(String id, String status, String redirectionUr
             LOGGER.info("Transaction {} with validation and cancelable, card number: {}", CANCELABLE_TRANSACTION_ID, request.cardNumber());
             transactionId = CANCELABLE_TRANSACTION_ID;
         }
-        return new TransactionResponse(transactionId, "PENDING", PATH + "/payments/3ds");
+        var transaction = new TransactionResponse(transactionId,
+                "PENDING",
+                String.format("http://localhost:8082/payments/3ds?transactionId=%s&status=%s&cartId=%s&amount=%s",
+                        transactionId,
+                        "ok",
+                        request.cartId(),
+                        request.amount()));
+        LOGGER.info("Transaction {}", transaction);
+        return transaction;
     }
 
     public static TransactionResponse ko() {

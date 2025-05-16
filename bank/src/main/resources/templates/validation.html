@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validation</title>
+</head>
+<body>
+<input th:value="${transactionId}" id="transactionId" type="hidden"/>
+<input th:value="${status}" id="status" type="hidden"/>
+<input th:value="${amount}" id="amount" type="hidden"/>
+<input th:value="${cartId}" id="cartId" type="hidden"/>
+<button onclick="redirect()" id="submit">
+    Rediriger vers le site
+</button>
+</body>
+
+<script>
+    async function redirect() {
+        const transactionId = document.getElementById('transactionId').value;
+        const status = document.getElementById('status').value;
+        const amount = document.getElementById('amount').value;
+        const cartId = document.getElementById('cartId').value;
+
+        window.location.href = 'http://localhost:8080/api/payment/cart/confirmation?transactionId=' + transactionId + '' +
+                '&status=' + status +
+                '&amount=' + amount +
+                '&cartId=' + cartId;
+    }
+</script>
+</html>
+
