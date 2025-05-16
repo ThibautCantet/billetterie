@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequestMapping
-public class ValidationController {
+public class AppValidationController {
 
     /**
      * Page de validation de la transaction pour retourner vers le site de billetterie

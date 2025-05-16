@@ -22,10 +22,12 @@
         const amount = document.getElementById('amount').value;
         const cartId = document.getElementById('cartId').value;
 
-        window.location.href = 'http://localhost:8080/api/payment/cart/confirmation?transactionId=' + transactionId + '' +
+        const redirection = 'http://localhost:8080/api/payment/cart/confirmation?transactionId=' + transactionId + '' +
                 '&status=' + status +
                 '&amount=' + amount +
                 '&cartId=' + cartId;
+        console.log(redirection);
+        window.location.href = redirection;
     }
 </script>
 </html>

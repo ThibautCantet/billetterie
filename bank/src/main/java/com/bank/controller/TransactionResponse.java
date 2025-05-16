@@ -8,13 +8,18 @@ public record TransactionResponse(String id, String status, String redirectionUr
     private static final Logger LOGGER = LoggerFactory.getLogger(TransactionResponse.class);
 
     private static final String CANCELABLE_TRANSACTION_ID = "123456789";
-    private static final String NOT_CANCELABLE_TRANSACTION_ID = "1123456789";
+    private static final String NOT_CANCELABLE_TRANSACTION_ID = "1123456500";
     public static final String TRANSACTION_KO = "312354645";
     public static final String TRANSACTION_REJECTED = "654654654";
 
     public static TransactionResponse withoutValidationAndCancelable() {
         LOGGER.info("Transaction {} without validation and cancelable", CANCELABLE_TRANSACTION_ID);
         return new TransactionResponse(CANCELABLE_TRANSACTION_ID, "ok", null);
+    }
+
+    public static TransactionResponse withoutValidationAndNotCancelable() {
+        LOGGER.info("Transaction {} without validation and not cancelable", NOT_CANCELABLE_TRANSACTION_ID);
+        return new TransactionResponse(NOT_CANCELABLE_TRANSACTION_ID, "ok", null);
     }
 
     public static TransactionResponse pending(PaymentRequest request) {
@@ -33,7 +38,7 @@ public record TransactionResponse(String id, String status, String redirectionUr
                         "ok",
                         request.cartId(),
                         request.amount()));
-        LOGGER.info("Transaction {}", transaction);
+        LOGGER.info("Transaction pending {}", transaction);
         return transaction;
     }
 

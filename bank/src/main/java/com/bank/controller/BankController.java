@@ -22,9 +22,11 @@ public class BankController {
     private static final Logger LOGGER = LoggerFactory.getLogger(BankController.class);
 
     static final String PATH = "/api/bank";
+    public static final String NOT_CANCELABLE_PATTERN = "500";
 
     /**
      * Pay the given payment request.
+     *
      * @param request the payment request
      * @return the transaction ok; ko; pending; rejected
      */
@@ -34,7 +36,11 @@ public class BankController {
             return TransactionResponse.rejected();
         }
         if (request.validationNotRequired()) {
-            return TransactionResponse.withoutValidationAndCancelable();
+            if (request.cardNumber().contains(NOT_CANCELABLE_PATTERN)) {
+                return TransactionResponse.withoutValidationAndNotCancelable();
+            } else {
+                return TransactionResponse.withoutValidationAndCancelable();
+            }
         } else if (request.validationRequired()) {
             return TransactionResponse.pending(request);
         }
@@ -44,11 +50,11 @@ public class BankController {
     @DeleteMapping("/payments/{transactionId}")
     public Boolean cancel(@PathVariable(name = "transactionId") String transactionId,
                           @RequestParam(name = "amount") Float amount) {
-        boolean canceled = amount > 1000f;
+        boolean canceled = amount < 1000f && !transactionId.contains(NOT_CANCELABLE_PATTERN);
         if (canceled) {
-            LOGGER.info("Transaction {} canceled", transactionId);
+            LOGGER.info("Transaction {} of {}€ canceled", transactionId, amount);
         } else {
-            LOGGER.warn("Transaction {} not canceled", transactionId);
+            LOGGER.warn("Transaction {} of {}€ not canceled", transactionId, amount);
         }
         return canceled;
     }
@@ -60,13 +66,9 @@ public class BankController {
             @RequestParam(name = "amount") Float amount,
             @RequestParam(name = "transactionId") String transactionId) {
         var headers = new HttpHeaders();
-        if (status.equals("ok")) {
-            headers.setLocation(URI.create(
-                    String.format("http://localhost:8080/api/payment/cart/confirmation?transactionId=%s&status=ok&cartId=%s&amount=%s",
-                            transactionId, cartId, amount)));
-        } else {
-            headers.setLocation(URI.create("http://localhost:8080/cart?error=true&cartId=" + cartId + "&amount=" + amount));
-        }
+        headers.setLocation(URI.create(
+                String.format("http://localhost:8080/api/payment/cart/confirmation?transactionId=%s&status=ok&cartId=%s&amount=%s",
+                        transactionId, cartId, amount)));
         return new ResponseEntity<>(headers, HttpStatusCode.valueOf(301));
     }
 }
