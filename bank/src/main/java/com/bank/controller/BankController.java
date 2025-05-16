@@ -48,15 +48,15 @@ public class BankController {
     }
 
     @DeleteMapping("/payments/{transactionId}")
-    public Boolean cancel(@PathVariable(name = "transactionId") String transactionId,
-                          @RequestParam(name = "amount") Float amount) {
+    public CancelResponse cancel(@PathVariable(name = "transactionId") String transactionId,
+                                 @RequestParam(name = "amount") Float amount) {
         boolean canceled = amount < 1000f && !transactionId.contains(NOT_CANCELABLE_PATTERN);
         if (canceled) {
             LOGGER.info("Transaction {} of {}€ canceled", transactionId, amount);
         } else {
             LOGGER.warn("Transaction {} of {}€ not canceled", transactionId, amount);
         }
-        return canceled;
+        return new CancelResponse(canceled ?  "ok" : "ko");
     }
 
     @GetMapping("/payments/3ds")
