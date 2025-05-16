@@ -5,6 +5,7 @@ import com.cantet.thibaut.payment.infrastructure.controller.PaymentController;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.CartDto;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.CreditCardDto;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentDto;
+import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentResultDto;
 import com.cantet.thibaut.payment.infrastructure.service.EmailCustomerSupport;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
@@ -14,6 +15,7 @@ import io.cucumber.java.Before;
 import io.cucumber.java.fr.Alors;
 import io.cucumber.java.fr.Et;
 import io.cucumber.java.fr.Etantdonné;
+import io.cucumber.java.fr.Etqu;
 import io.cucumber.java.fr.Etque;
 import io.cucumber.java.fr.Quand;
 import io.cucumber.junit.Cucumber;
@@ -21,7 +23,6 @@ import io.cucumber.junit.CucumberOptions;
 import io.cucumber.spring.CucumberContextConfiguration;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import org.assertj.core.api.AbstractObjectAssert;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -36,7 +37,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.ui.Model;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -136,9 +136,10 @@ public class PaymentATest extends ATest {
                             "cardNumber": "%s",
                             "expirationDate": "%s",
                             "cypher": "%s",
+                            "cartId": "%s",
                             "amount": "%s"
                         }
-                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.amount())))
+                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount())))
                 .willReturn(okJson(String.format("""
                         {
                           "id": "%s",
@@ -165,6 +166,32 @@ public class PaymentATest extends ATest {
                           "amount": "%s"
                         }
                         """.formatted(orderId, cartDto.amount()))));
+    }
+
+    @Alors("on est bien redirigé vers la page de confirmation de commande {string} d'un montant de {float} euros avec une transaction bancaire {string}")
+    public void onEstBienRedirigéVersLaPageDeConfirmation(String orderId, float amount, String transactionId) {
+        var paymentResultDto = response
+                .then()
+                .log().all()
+                .statusCode(200)
+                .body("status", is("SUCCESS"))
+                .body("id", is(orderId))
+                .body("amount", is(amount))
+                .body("transactionId", is(transactionId))
+                .body("redirectUrl", is("/confirmation/" + orderId + "?amount=" + amount))
+                .extract().as(PaymentResultDto.class);
+
+        String confirmationUrl = paymentResultDto.redirectUrl();
+
+        RestAssured.basePath = "/";
+        //@formatter:off
+        response = RestAssured.given()
+                .log().all()
+                .header("Content-Type", ContentType.JSON)
+                .body(new PaymentDto(cartDto, creditCardDto))
+        .when()
+                .get(confirmationUrl);
+        //@formatter:on
     }
 
     @Alors("on obtient une commande {string} d'un montant de {float} euros")
@@ -205,9 +232,10 @@ public class PaymentATest extends ATest {
                             "cardNumber": "%s",
                             "expirationDate": "%s",
                             "cypher": "%s",
+                            "cartId": "%s",
                             "amount": "%s"
                         }
-                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.amount())))
+                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount())))
                 .willReturn(okJson(String.format("""
                         {
                           "id": "%s",
@@ -255,7 +283,8 @@ public class PaymentATest extends ATest {
 
     @Etque("on la transaction bancaire {string} est annulée")
     public void onLaTransactionBancaireEstAnnulée(String transactionId) {
-        wireMockServer.stubFor(delete(urlEqualTo("/bank/payments/" + transactionId))
+        wireMockServer.stubFor(delete(urlPathTemplate("/bank/payments/{transactionId}"))
+                .withPathParam("transactionId", equalTo(transactionId))
                 .withQueryParam("amount", equalTo(String.valueOf(cartDto.amount())))
                 .willReturn(okJson("""
                         {
@@ -359,7 +388,8 @@ public class PaymentATest extends ATest {
 
     @Etque("on la transaction bancaire {string} n'est pas annulée")
     public void onLaTransactionBancaireNEstPasAnnulée(String transactionId) {
-        wireMockServer.stubFor(delete(urlEqualTo("/bank/payments/" + transactionId))
+        wireMockServer.stubFor(delete(urlPathTemplate("/bank/payments/{transactionId}"))
+                .withPathParam("transactionId", equalTo(transactionId))
                 .withQueryParam("amount", equalTo(String.valueOf(cartDto.amount())))
                 .willReturn(okJson("""
                         {

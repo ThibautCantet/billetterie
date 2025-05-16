@@ -69,7 +69,11 @@ public class TransformToOrderTest {
                 TransformToOrderResult::orderId,
                 TransformToOrderResult::redirectUrl,
                 TransformToOrderResult::amount)
-                .containsExactly(FAILED, TRANSACTION_ID, null, "/panier", null);
+                .containsExactly(FAILED,
+                        TRANSACTION_ID,
+                        null,
+                        "/cart?error=true&cartId=123456&amount=100.0",
+                        null);
 
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
@@ -93,7 +97,11 @@ public class TransformToOrderTest {
                 TransformToOrderResult::orderId,
                 TransformToOrderResult::redirectUrl,
                 TransformToOrderResult::amount)
-                .containsExactly(FAILED, TRANSACTION_ID, null, "/panier", null);
+                .containsExactly(FAILED,
+                        TRANSACTION_ID,
+                        null,
+                        "/cart?error=true&cartId=123456&amount=100.0",
+                        null);
 
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 

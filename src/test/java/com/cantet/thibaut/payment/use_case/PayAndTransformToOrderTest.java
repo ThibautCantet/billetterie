@@ -124,7 +124,11 @@ class PayAndTransformToOrderTest {
                         PayAndTransformToOrderResult::orderId,
                         PayAndTransformToOrderResult::redirectUrl,
                         PayAndTransformToOrderResult::amount)
-                .containsExactly(PaymentStatus.FAILED, TRANSACTION_ID, null, "/panier", 0.0f);
+                .containsExactly(PaymentStatus.FAILED,
+                        TRANSACTION_ID,
+                        null,
+                        "/cart?error=true&cartId=123456&amount=100.0",
+                        0.0f);
 
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
@@ -153,7 +157,11 @@ class PayAndTransformToOrderTest {
                         PayAndTransformToOrderResult::orderId,
                         PayAndTransformToOrderResult::redirectUrl,
                         PayAndTransformToOrderResult::amount)
-                .containsExactly(PaymentStatus.FAILED, TRANSACTION_ID, null, "/panier", 0.0f);
+                .containsExactly(PaymentStatus.FAILED,
+                        TRANSACTION_ID,
+                        null,
+                        "/cart?error=true&cartId=123456&amount=100.0",
+                        0.0f);
 
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 

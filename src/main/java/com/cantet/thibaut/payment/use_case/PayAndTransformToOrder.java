@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import static com.cantet.thibaut.payment.domain.PaymentStatus.*;
+import static com.cantet.thibaut.payment.use_case.TransformToOrder.*;
 
 @Service
 public class PayAndTransformToOrder {
@@ -60,19 +61,24 @@ public class PayAndTransformToOrder {
             LOGGER.warn("Cart not transformed to order: {}", cartId);
             boolean cancel = bank.cancel(transaction.id(), amount);
             if (!cancel) {
-                LOGGER.info("Transaction cancellation failed: {}", transaction.id());
+                LOGGER.error("Transaction cancellation failed: {}", transaction.id());
                 customerSupport.alertTransactionFailure(transaction.id(), cartId, amount);
+            } else {
+                LOGGER.info("Transaction cancelled: {}", transaction.id());
             }
 
-            return new PayAndTransformToOrderResult(
+            var payAndTransformToOrderResult = new PayAndTransformToOrderResult(
                     FAILED,
                     transaction.id(),
-                    "/panier",
+                    getErrorCartUrl(cartId, amount),
                     null,
                     0);
+
+            LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", payAndTransformToOrderResult);
+            return payAndTransformToOrderResult;
         }
 
-        LOGGER.info("Order transformation succeeded: {}", order.id());
+        LOGGER.info("Cart transformed to order: {}", order.id());
         return new PayAndTransformToOrderResult(
                 SUCCESS,
                 transaction.id(),

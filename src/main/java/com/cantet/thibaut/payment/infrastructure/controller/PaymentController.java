@@ -9,6 +9,9 @@ import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentDto;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentResultDto;
 import com.cantet.thibaut.payment.use_case.PayAndTransformToOrder;
 import com.cantet.thibaut.payment.use_case.TransformToOrder;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -20,10 +23,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import static com.cantet.thibaut.payment.domain.PaymentStatus.*;
+import static com.cantet.thibaut.payment.use_case.TransformToOrder.*;
 
 @RestController
 @RequestMapping(PaymentController.PATH)
+@Slf4j
 public class PaymentController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PaymentController.class);
+
     public static final String PATH = "/api/payment";
     private final PayAndTransformToOrder payAndTransformToOrder;
     private final TransformToOrder transformToOrder;
@@ -33,7 +40,12 @@ public class PaymentController {
         this.transformToOrder = transformToOrder;
     }
 
-
+    /**
+     * Process the payment and transform it into an order.
+     * Return data to redirect the user to the bank for payment or to the order confirmation page.
+     * @param paymentDto the payment request
+     * @return the payment result
+     */
     @PostMapping
     public PaymentResultDto processPayment(@RequestBody PaymentDto paymentDto) {
         PayAndTransformToOrderResult result = payAndTransformToOrder.execute(
@@ -65,12 +77,12 @@ public class PaymentController {
         TransformToOrderResult result;
         var headers = new HttpHeaders();
         if (status.equals("ko")) {
-            response = redirectToCartOnError(amount, cartId, headers);
+            response = redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
         } else {
             result = transformToOrder.execute(transactionId, cartId, amount);
 
             if (result.status() == TransformToOrderStatus.FAILED) {
-                response = redirectToCartOnError(amount, cartId, headers);
+                response = redirectToCartOnError(amount, result.redirectUrl(), headers);
             } else {
                 headers.setLocation(URI.create(result.redirectUrl()));
                 response = new PaymentResultDto(
@@ -79,14 +91,17 @@ public class PaymentController {
                         result.amount(),
                         result.transactionId(),
                         result.redirectUrl());
+                LOGGER.info("Transaction succeeded, redirecting to confirmation page: {} {}", result.redirectUrl(), response);
             }
         }
         return new ResponseEntity<>(response, headers, HttpStatusCode.valueOf(301));
     }
 
-    private static PaymentResultDto redirectToCartOnError(Float amount, String cartId, HttpHeaders headers) {
-        var response = new PaymentResultDto(FAILED, null, amount, null, "/cart?error=true&cartId=" + cartId + "&amount=" + amount);
-        headers.setLocation(URI.create("/cart?error=true&cartId=" + cartId + "&amount=" + amount));
+    private static PaymentResultDto redirectToCartOnError(Float amount, String cartUrl, HttpHeaders headers) {
+        var response = new PaymentResultDto(FAILED, null, amount, null, cartUrl);
+        headers.setLocation(URI.create(cartUrl));
+
+        LOGGER.error("Transaction failed, redirecting to cart with error: {} {}", cartUrl, response);
         return response;
     }
 }

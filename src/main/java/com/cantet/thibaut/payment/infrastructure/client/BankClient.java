@@ -56,16 +56,16 @@ public class BankClient implements Bank {
         String url = bankUrl + "/bank/payments/" + transactionId + "?amount=" + amount;
 
         try {
-            ResponseEntity<Boolean> response = restTemplate.exchange(
+            ResponseEntity<CancelResponse> response = restTemplate.exchange(
                     url,
                     HttpMethod.DELETE,
                     null,
-                    Boolean.class
+                    CancelResponse.class
             );
 
-            return Boolean.TRUE.equals(response.getBody());
+            return response.getBody().isCanceled();
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            LOGGER.error("Error while canceling transaction {}", transactionId, e);
             return false;
         }
     }

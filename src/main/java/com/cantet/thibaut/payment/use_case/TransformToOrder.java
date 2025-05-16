@@ -28,19 +28,24 @@ public class TransformToOrder {
         Order order = orders.transformToOrder(cartId, amount);
 
         if (order.isNotCompleted()) {
-            LOGGER.info("Cart not transformed to order: {}", cartId);
+            LOGGER.warn("Cart not transformed to order: {}", cartId);
             boolean cancel = bank.cancel(transactionId, amount);
             if (!cancel) {
-                LOGGER.info("Transaction cancellation failed: {}", transactionId);
+                LOGGER.error("Transaction cancellation failed: {}", transactionId);
                 customerSupport.alertTransactionFailure(transactionId, cartId, amount);
+            } else {
+                LOGGER.info("Transaction cancelled: {}", transactionId);
             }
 
-            return new TransformToOrderResult(
+            var transformToOrderResult = new TransformToOrderResult(
                     TransformToOrderStatus.FAILED,
                     transactionId,
-                    "/panier",
+                    getErrorCartUrl(cartId, amount),
                     null,
                     null);
+            LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", transformToOrderResult);
+
+            return transformToOrderResult;
         }
 
         LOGGER.info("Cart transformed to order: {}", order.id());
@@ -50,5 +55,9 @@ public class TransformToOrder {
                 String.format("/confirmation/%s?amount=%s", order.id(), amount),
                 order.id(),
                 amount);
+    }
+
+    public static String getErrorCartUrl(String cartId, float amount) {
+        return "/cart?error=true&cartId=" + cartId + "&amount=" + amount;
     }
 }
