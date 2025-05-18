@@ -1,5 +1,13 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<style>
+    .red {
+        color: red;
+    }
+    .green {
+        color: green;
+    }
+</style>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,21 +16,33 @@
 <body>
     <h1>Formulaire de Paiement</h1>
     <span id="error" style="display:none" class="red">Une erreur est survenue lors du paiement</span>
-    <form >
+    <div>
+        <h2>Scénarios</h2>
+        <h3>Sans 3DS (montant <= 100€)</h3>
+        <p>1.1) Pour transformer le panier en commande :  et le <span class="green">panier id doit contenir 200</span></p>
+        <p>1.2) Pour <span class="red">NE PAS</span> avoir de commande et annuler la transaction : <span class="red">le panier id ne doit pas contenir 200</span></p>
+        <p>1.23) Pour <span class="red">NE PAS</span> avoir de commande et <span class="red">NE PAS</span> annuler la transaction : <span class="red">le panier id ne doit pas contenir 200</span> et <span class="red">numéro de carte contenant 500</span></p>
+        <p>2) Pour rejeter directement le paiement : <span class="red">montant = 666€</span></p>
+        <h3>Avec 3DS (montant > 100€)</h3>
+        <p>1.1) Pour transformer le panier en commande : <span class="green">montant > 100€</span> et <span class="green">le panier id doit contenir 200</span></p>
+        <p>1.2) Pour <span class="red">NE PAS</span> avoir de commande et annuler la transaction : <span class="green">montant entre 100€ 1000€</span> et <span class="red">le panier id ne doit pas contenir 200</span></p>
+        <p>1.3) Pour <span class="red">NE PAS</span> avoir de commande et <span class="red">NE PAS</span> annuler la transaction : <span class="red">montant > 1000€</span></p>
+    </div>
+    <form>
         <label for="cartId">ID du Panier :</label>
-        <input type="text" id="cartId" name="cartId" required>
+        <input type="text" id="cartId" name="cartId" required value="200">
         <br><br>
         <label for="amount">Montant (€) :</label>
         <input type="number" id="amount" name="amount" step="0.01" required>
         <br><br>
         <label for="cardNumber">Numéro de la carte :</label>
-        <input type="number" id="cardNumber" name="cardNumber" step="0.01" required>
+        <input type="text" id="cardNumber" name="cardNumber" step="0.01" required value="1234 5678 9012 3456">
         <br><br>
         <label for="expirationDate">Date d'expiration :</label>
-        <input type="text" id="expirationDate" name="expirationDate" step="0.01" required>
+        <input type="text" id="expirationDate" name="expirationDate" step="0.01" required value="10/2030">
         <br><br>
         <label for="cypher">Cryptogramme :</label>
-        <input type="number" id="cypher" name="cypher" step="0.01" required>
+        <input type="number" id="cypher" name="cypher" step="0.01" required value="123">
         <br><br>
         <button type="button" onclick="submitPayment()">Payer</button>
     </form>
