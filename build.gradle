@@ -22,9 +22,11 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.postgresql:postgresql:42.7.5'
-	compileOnly 'org.projectlombok:lombok:1.18.38'
-	implementation 'org.projectlombok:lombok:1.18.38'
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf:3.4.5'
+	compileOnly group:'org.projectlombok', name:'lombok', version: property('lombok.version')
+	implementation group: 'org.projectlombok', name:'lombok', version: property('lombok.version')
+	implementation group: 'org.springframework.boot', name:'spring-boot-starter-thymeleaf', version: property('springboot.version')
+	implementation group: 'org.springframework.boot', name:'spring-boot-starter-mail', version: property('springboot.version')
+	implementation group: 'org.springframework', name: 'spring-context-support', version: '6.2.7'
 
 	testImplementation 'com.h2database:h2:2.3.232'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

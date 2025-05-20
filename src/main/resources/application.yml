@@ -10,6 +10,12 @@ spring:
     username: user
     password: password
 
+email:
+  host: sandbox.smtp.mailtrap.io
+  port: 587
+  username: c5050ea42e4e83
+  password: a3f214a68079ef
+
 bank:
   url: http://localhost:8082/api
 
