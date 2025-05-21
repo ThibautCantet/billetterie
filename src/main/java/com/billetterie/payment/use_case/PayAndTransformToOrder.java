@@ -49,6 +49,6 @@ public class PayAndTransformToOrder {
 
         LOGGER.info("Transaction for cart id {} succeeded, with transaction id:{}", command.cartId(), transaction.id());
 
-        return transformToOrder.execute(transaction.id(), command.cartId(), command.amount());
+        return transformToOrder.execute(new TransformToOrderCommand(transaction.id(), command.cartId(), command.amount()));
     }
 }

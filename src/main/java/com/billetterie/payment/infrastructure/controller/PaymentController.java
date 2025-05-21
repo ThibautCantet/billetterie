@@ -10,6 +10,7 @@ import com.billetterie.payment.infrastructure.controller.dto.PaymentResultDto;
 import com.billetterie.payment.use_case.PayAndTransformToOrder;
 import com.billetterie.payment.use_case.PayAndTransformToOrderCommand;
 import com.billetterie.payment.use_case.TransformToOrder;
+import com.billetterie.payment.use_case.TransformToOrderCommand;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +82,7 @@ public class PaymentController {
         if (status.equals("ko")) {
             response = redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
         } else {
-            result = transformToOrder.execute(transactionId, cartId, amount);
+            result = transformToOrder.execute(new TransformToOrderCommand(transactionId, cartId, amount));
 
             if (result.status() == PaymentStatus.FAILED) {
                 response = redirectToCartOnError(amount, result.redirectUrl(), headers);
