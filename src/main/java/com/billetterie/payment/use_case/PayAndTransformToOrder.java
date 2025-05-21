@@ -22,8 +22,8 @@ public class PayAndTransformToOrder {
         this.transformToOrder = transformToOrder;
     }
 
-    public PayAndTransformToOrderResult execute(String cartId, String cardNumber, String expirationDate, String cypher, float amount) {
-        Transaction transaction = bank.pay(new Payment(cardNumber, expirationDate, cypher, cartId, amount));
+    public PayAndTransformToOrderResult execute(PayAndTransformToOrderCommand command) {
+        Transaction transaction = bank.pay(new Payment(command.cardNumber(), command.expirationDate(), command.cypher(), command.cartId(), command.amount()));
 
         if (transaction.isPending()) {
             var pendingTransaction = new PayAndTransformToOrderResult(
@@ -31,7 +31,7 @@ public class PayAndTransformToOrder {
                     transaction.id(),
                     transaction.redirectionUrl(),
                     null,
-                    amount);
+                    command.amount());
             LOGGER.info("Transaction is pending: {}", pendingTransaction);
             return pendingTransaction;
         }
@@ -47,8 +47,8 @@ public class PayAndTransformToOrder {
             return failedTransaction;
         }
 
-        LOGGER.info("Transaction for cart id {} succeeded, with transaction id:{}", cartId, transaction.id());
+        LOGGER.info("Transaction for cart id {} succeeded, with transaction id:{}", command.cartId(), transaction.id());
 
-        return transformToOrder.execute(transaction.id(), cartId, amount);
+        return transformToOrder.execute(transaction.id(), command.cartId(), command.amount());
     }
 }
