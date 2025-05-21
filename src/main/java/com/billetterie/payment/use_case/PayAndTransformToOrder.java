@@ -4,8 +4,8 @@ import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Order;
 import com.billetterie.payment.domain.Orders;
-import com.billetterie.payment.domain.Payment;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
+import com.billetterie.payment.domain.Payment;
 import com.billetterie.payment.domain.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,23 +32,17 @@ public class PayAndTransformToOrder {
         Transaction transaction = bank.pay(new Payment(cardNumber, expirationDate, cypher, cartId, amount));
 
         if (transaction.isPending()) {
-            var pendingTransaction = new PayAndTransformToOrderResult(
-                    PENDING,
+            var pendingTransaction = PayAndTransformToOrderResult.pending(
                     transaction.id(),
                     transaction.redirectionUrl(),
-                    null,
                     amount);
             LOGGER.info("Transaction is pending: {}", pendingTransaction);
             return pendingTransaction;
         }
 
         if (!transaction.hasSucceeded()) {
-            var failedTransaction = new PayAndTransformToOrderResult(
-                    transaction.status(),
-                    transaction.id(),
-                    null,
-                    null,
-                    0);
+            var failedTransaction = PayAndTransformToOrderResult.failed(
+                    transaction.id());
             LOGGER.info("Transaction failed: {}", failedTransaction);
             return failedTransaction;
         }
@@ -72,7 +66,7 @@ public class PayAndTransformToOrder {
                     transaction.id(),
                     getErrorCartUrl(cartId, amount),
                     null,
-                    0);
+                    0f);
 
             LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", payAndTransformToOrderResult);
             return payAndTransformToOrderResult;
