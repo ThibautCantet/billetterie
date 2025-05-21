@@ -4,8 +4,8 @@ import com.cantet.thibaut.payment.domain.Bank;
 import com.cantet.thibaut.payment.domain.CustomerSupport;
 import com.cantet.thibaut.payment.domain.Order;
 import com.cantet.thibaut.payment.domain.Orders;
-import com.cantet.thibaut.payment.domain.Payment;
 import com.cantet.thibaut.payment.domain.PayAndTransformToOrderResult;
+import com.cantet.thibaut.payment.domain.Payment;
 import com.cantet.thibaut.payment.domain.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +48,7 @@ public class PayAndTransformToOrder {
                     transaction.id(),
                     null,
                     null,
-                    0);
+                    0f);
             LOGGER.info("Transaction failed: {}", failedTransaction);
             return failedTransaction;
         }
@@ -72,7 +72,7 @@ public class PayAndTransformToOrder {
                     transaction.id(),
                     getErrorCartUrl(cartId, amount),
                     null,
-                    0);
+                    0f);
 
             LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", payAndTransformToOrderResult);
             return payAndTransformToOrderResult;
