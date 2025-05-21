@@ -3,8 +3,8 @@ package com.cantet.thibaut.payment.infrastructure.controller;
 import java.net.URI;
 
 import com.cantet.thibaut.payment.domain.PayAndTransformToOrderResult;
-import com.cantet.thibaut.payment.domain.TransformToOrderResult;
-import com.cantet.thibaut.payment.domain.TransformToOrderStatus;
+import com.cantet.thibaut.payment.domain.PayAndTransformToOrderResult;
+import com.cantet.thibaut.payment.domain.PaymentStatus;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentDto;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentResultDto;
 import com.cantet.thibaut.payment.use_case.PayAndTransformToOrder;
@@ -74,14 +74,14 @@ public class PaymentController {
             @RequestParam(name = "cartId") String cartId,
             @RequestParam(name = "amount") Float amount) {
         PaymentResultDto response;
-        TransformToOrderResult result;
+        PayAndTransformToOrderResult result;
         var headers = new HttpHeaders();
         if (status.equals("ko")) {
             response = redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
         } else {
             result = transformToOrder.execute(transactionId, cartId, amount);
 
-            if (result.status() == TransformToOrderStatus.FAILED) {
+            if (result.status() == PaymentStatus.FAILED) {
                 response = redirectToCartOnError(amount, result.redirectUrl(), headers);
             } else {
                 headers.setLocation(URI.create(result.redirectUrl()));

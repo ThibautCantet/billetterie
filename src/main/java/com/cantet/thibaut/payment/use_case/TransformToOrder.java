@@ -4,8 +4,8 @@ import com.cantet.thibaut.payment.domain.Bank;
 import com.cantet.thibaut.payment.domain.CustomerSupport;
 import com.cantet.thibaut.payment.domain.Order;
 import com.cantet.thibaut.payment.domain.Orders;
-import com.cantet.thibaut.payment.domain.TransformToOrderResult;
-import com.cantet.thibaut.payment.domain.TransformToOrderStatus;
+import com.cantet.thibaut.payment.domain.PayAndTransformToOrderResult;
+import com.cantet.thibaut.payment.domain.PaymentStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -24,7 +24,7 @@ public class TransformToOrder {
         this.customerSupport = customerSupport;
     }
 
-    public TransformToOrderResult execute(String transactionId, String cartId, float amount) {
+    public PayAndTransformToOrderResult execute(String transactionId, String cartId, float amount) {
         Order order = orders.transformToOrder(cartId, amount);
 
         if (order.isNotCompleted()) {
@@ -37,20 +37,20 @@ public class TransformToOrder {
                 LOGGER.info("Transaction cancelled: {}", transactionId);
             }
 
-            var transformToOrderResult = new TransformToOrderResult(
-                    TransformToOrderStatus.FAILED,
+            var payAndTransformToOrderResult = new PayAndTransformToOrderResult(
+                    PaymentStatus.FAILED,
                     transactionId,
                     getErrorCartUrl(cartId, amount),
                     null,
                     null);
-            LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", transformToOrderResult);
+            LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", payAndTransformToOrderResult);
 
-            return transformToOrderResult;
+            return payAndTransformToOrderResult;
         }
 
         LOGGER.info("Cart transformed to order: {}", order.id());
-        return new TransformToOrderResult(
-                TransformToOrderStatus.SUCCEEDED,
+        return new PayAndTransformToOrderResult(
+                PaymentStatus.SUCCESS,
                 transactionId,
                 String.format("/confirmation/%s?amount=%s", order.id(), amount),
                 order.id(),
