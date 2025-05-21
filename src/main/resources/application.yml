@@ -1,20 +1,8 @@
-spring:
-  jpa:
-    database: POSTGRESQL
-    show-sql: true
-    hibernate:
-      ddl-auto: create-drop
-  datasource:
-    driverClassName: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/billetterie
-    username: user
-    password: password
-
 email:
   host: sandbox.smtp.mailtrap.io
   port: 587
-  username: c5050ea42e4e83
-  password: a3f214a68079ef
+  username: ${USERNAME}
+  password: ${PASSWORD}
 
 bank:
   url: http://localhost:8082/api

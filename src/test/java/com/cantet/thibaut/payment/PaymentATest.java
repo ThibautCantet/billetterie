@@ -15,7 +15,6 @@ import io.cucumber.java.Before;
 import io.cucumber.java.fr.Alors;
 import io.cucumber.java.fr.Et;
 import io.cucumber.java.fr.Etantdonné;
-import io.cucumber.java.fr.Etqu;
 import io.cucumber.java.fr.Etque;
 import io.cucumber.java.fr.Quand;
 import io.cucumber.junit.Cucumber;
@@ -27,16 +26,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-import org.springframework.transaction.annotation.Transactional;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -45,12 +39,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.*;
 
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.AUTO_CONFIGURED)
-@Transactional
 @AutoConfigureCache
-@AutoConfigureDataJpa
-@EnableJpaRepositories
-@AutoConfigureTestEntityManager
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @DirtiesContext
 @CucumberContextConfiguration
@@ -217,7 +206,7 @@ public class PaymentATest extends ATest {
                             <h1>Confirmation de commande</h1>
                             <p>Votre commande a été confirmée avec succès.</p>
                             <p>Numéro de la commande : <span>%s</span></p>
-                            <p>Montant :<span>%s</span> €</p>
+                            <p>Montant : <span>%s</span> €</p>
                         </body>
                         </html>
                         """, orderId, amount));

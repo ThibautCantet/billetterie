@@ -5,20 +5,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.datatable.DataTable;
 import io.restassured.RestAssured;
-import io.restassured.config.ObjectMapperConfig;
-import io.restassured.config.RestAssuredConfig;
 import io.restassured.response.Response;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
 public abstract class ATest {
-    @Autowired
-    protected ObjectMapper objectMapper;
 
     @LocalServerPort
     protected int port;
@@ -27,9 +19,6 @@ public abstract class ATest {
         RestAssured.port = port;
         initPath();
     }
-
-    @Autowired
-    protected TestEntityManager entityManager;
 
     protected Response response;
 
