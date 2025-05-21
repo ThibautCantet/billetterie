@@ -7,11 +7,32 @@ To build the application, use the following command:
 ./gradlew build
 ```
 
-## Run the application
-To run the application, use the following command:
+## Configure the smtp server
+Create an account on [Mailtrap](https://mailtrap.io/) and configure the SMTP server by adding the following environment variables:
 
 ```bash
+USERNAME=your_username
+PASSWORD=your_password
+````
+
+## Run the applications
+To run the applications, use the following command:
+
+### Billetterie
+```bash
 ./gradlew bootRun
+```
+
+### Back Office
+```bash
+cd back-office-billetterie
+.././gradlew bootRun
+```
+
+### Bank
+```bash
+cd bank
+.././gradlew bootRun
 ```
 
 ## Test the application
