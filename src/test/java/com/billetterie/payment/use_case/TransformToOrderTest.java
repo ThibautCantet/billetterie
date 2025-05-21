@@ -45,7 +45,7 @@ public class TransformToOrderTest {
             when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
 
             // when
-            var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT, CLASSIC);
+            var result = transformToOrder.execute(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT, CLASSIC));
 
             // then
             assertThat(result).extracting(PayAndTransformToOrderResult::status,
@@ -65,7 +65,7 @@ public class TransformToOrderTest {
             when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(true);
 
             // when
-            var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT, CLASSIC);
+            var result = transformToOrder.execute(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT, CLASSIC));
 
             // then
             assertThat(result).extracting(PayAndTransformToOrderResult::status,
@@ -89,7 +89,7 @@ public class TransformToOrderTest {
             when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(false);
 
             // when
-            var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT, CLASSIC);
+            var result = transformToOrder.execute(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT, CLASSIC));
 
             // then
             assertThat(result).extracting(PayAndTransformToOrderResult::status,
@@ -114,7 +114,7 @@ public class TransformToOrderTest {
             when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
 
             // when
-            var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT, RESERVED);
+            var result = transformToOrder.execute(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT, RESERVED));
 
             // then
             assertThat(result).extracting(PayAndTransformToOrderResult::status,
@@ -134,7 +134,7 @@ public class TransformToOrderTest {
             when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(true);
 
             // when
-            var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT, RESERVED);
+            var result = transformToOrder.execute(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT, RESERVED));
 
             // then
             assertThat(result).extracting(PayAndTransformToOrderResult::status,
@@ -158,7 +158,7 @@ public class TransformToOrderTest {
             when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(false);
 
             // when
-            var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT, RESERVED);
+            var result = transformToOrder.execute(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT, RESERVED));
 
             // then
             assertThat(result).extracting(PayAndTransformToOrderResult::status,

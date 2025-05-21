@@ -7,9 +7,10 @@ import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import com.billetterie.payment.domain.PaymentStatus;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentDto;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentResultDto;
-import com.billetterie.payment.payment.use_case.PayAndTransformToOrderCommand;
+import com.billetterie.payment.use_case.PayAndTransformToOrderCommand;
 import com.billetterie.payment.use_case.PayAndTransformToOrder;
 import com.billetterie.payment.use_case.TransformToOrder;
+import com.billetterie.payment.use_case.TransformToOrderCommand;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,7 +95,7 @@ public class PaymentController {
             }
             response = redirectToCartOnError(amount, url, headers);
         } else {
-            result = transformToOrder.execute(transactionId, cartId, amount, type);
+            result = transformToOrder.execute(new TransformToOrderCommand(transactionId, cartId, amount, type));
 
             if (result.status() == PaymentStatus.FAILED) {
                 response = redirectToCartOnError(amount, url, headers);
