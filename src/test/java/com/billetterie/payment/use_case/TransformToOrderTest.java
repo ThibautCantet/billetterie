@@ -4,14 +4,14 @@ import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Order;
 import com.billetterie.payment.domain.Orders;
-import com.billetterie.payment.domain.TransformToOrderResult;
+import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static com.billetterie.payment.domain.TransformToOrderStatus.*;
+import static com.billetterie.payment.domain.PaymentStatus.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -44,12 +44,12 @@ public class TransformToOrderTest {
         var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT);
 
         // then
-        assertThat(result).extracting(TransformToOrderResult::status,
-                TransformToOrderResult::transactionId,
-                TransformToOrderResult::orderId,
-                TransformToOrderResult::redirectUrl,
-                TransformToOrderResult::amount)
-                .containsExactly(SUCCEEDED, TRANSACTION_ID, ORDER_ID, "/confirmation/654654?amount=100.0", AMOUNT);
+        assertThat(result).extracting(PayAndTransformToOrderResult::status,
+                PayAndTransformToOrderResult::transactionId,
+                PayAndTransformToOrderResult::orderId,
+                PayAndTransformToOrderResult::redirectUrl,
+                PayAndTransformToOrderResult::amount)
+                .containsExactly(SUCCESS, TRANSACTION_ID, ORDER_ID, "/confirmation/654654?amount=100.0", AMOUNT);
     }
 
     @Test
@@ -64,9 +64,9 @@ public class TransformToOrderTest {
         var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT);
 
         // then
-        assertThat(result).extracting(TransformToOrderResult::status,
-                TransformToOrderResult::transactionId,
-                TransformToOrderResult::redirectUrl)
+        assertThat(result).extracting(PayAndTransformToOrderResult::status,
+                PayAndTransformToOrderResult::transactionId,
+                PayAndTransformToOrderResult::redirectUrl)
                 .containsExactly(FAILED,
                         TRANSACTION_ID,
                         "/cart?error=true&cartId=123456&amount=100.0");
@@ -88,9 +88,9 @@ public class TransformToOrderTest {
         var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT);
 
         // then
-        assertThat(result).extracting(TransformToOrderResult::status,
-                TransformToOrderResult::transactionId,
-                TransformToOrderResult::redirectUrl)
+        assertThat(result).extracting(PayAndTransformToOrderResult::status,
+                PayAndTransformToOrderResult::transactionId,
+                PayAndTransformToOrderResult::redirectUrl)
                 .containsExactly(FAILED,
                         TRANSACTION_ID,
                         "/cart?error=true&cartId=123456&amount=100.0");
