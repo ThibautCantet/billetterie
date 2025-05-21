@@ -1,4 +1,4 @@
-package com.billetterie.payment.payment.use_case;
+package com.billetterie.payment.use_case;
 
 import com.billetterie.payment.domain.CartType;
 

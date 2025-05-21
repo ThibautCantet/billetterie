@@ -24,46 +24,46 @@ public class TransformToOrder {
         this.customerSupport = customerSupport;
     }
 
-    public PayAndTransformToOrderResult execute(String transactionId, String cartId, float amount, CartType type) {
-        Order order = orders.transformToOrder(cartId, amount);
+    public PayAndTransformToOrderResult execute(TransformToOrderCommand command) {
+        Order order = orders.transformToOrder(command.cartId(), command.amount());
 
         if (order.isNotCompleted()) {
-            LOGGER.warn("Cart not transformed to order: {}", cartId);
-            boolean cancel = bank.cancel(transactionId, amount);
+            LOGGER.warn("Cart not transformed to order: {}", command.cartId());
+            boolean cancel = bank.cancel(command.transactionId(), command.amount());
             if (!cancel) {
-                LOGGER.error("Transaction cancellation failed: {}", transactionId);
-                customerSupport.alertTransactionFailure(transactionId, cartId, amount);
+                LOGGER.error("Transaction cancellation failed: {}", command.transactionId());
+                customerSupport.alertTransactionFailure(command.transactionId(), command.cartId(), command.amount());
             } else {
-                LOGGER.info("Transaction cancelled: {}", transactionId);
+                LOGGER.info("Transaction cancelled: {}", command.transactionId());
             }
 
             String errorUrl;
-            if (type == CartType.CLASSIC) {
-                errorUrl = getErrorCartUrl(cartId, amount);
-                LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", cartId);
+            if (command.cartType() == CartType.CLASSIC) {
+                errorUrl = getErrorCartUrl(command.cartId(), command.amount());
+                LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", command.cartId());
             } else {
-                errorUrl = getErrorUrl(cartId, amount);
-                LOGGER.info("Panier reservé not transformed into order and redirect error: {}", cartId);
+                errorUrl = getErrorUrl(command.cartId(), command.amount());
+                LOGGER.info("Panier reservé not transformed into order and redirect error: {}", command.cartId());
             }
 
             return PayAndTransformToOrderResult.failed(
-                    transactionId,
+                    command.transactionId(),
                     errorUrl);
         }
 
         String url;
-        if (type == CartType.CLASSIC) {
-            url = String.format("/confirmation/%s?amount=%s", order.id(), amount);
+        if (command.cartType() == CartType.CLASSIC) {
+            url = String.format("/confirmation/%s?amount=%s", order.id(), command.amount());
             LOGGER.info("Cart transformed to order: {}", order.id());
         } else {
-            url = String.format("/my-orders?id=%s&amount=%s", order.id(), amount);
+            url = String.format("/my-orders?id=%s&amount=%s", order.id(), command.amount());
             LOGGER.info("Panier réservé transformed to order: {}", order.id());
         }
         return PayAndTransformToOrderResult.succeeded(
-                transactionId,
+                command.transactionId(),
                 order.id(),
-                amount,
-                type,
+                command.amount(),
+                command.cartType(),
                 url);
     }
 
