@@ -9,6 +9,7 @@ import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import com.billetterie.payment.domain.Payment;
 import com.billetterie.payment.domain.PaymentStatus;
 import com.billetterie.payment.domain.Transaction;
+import com.billetterie.payment.payment.use_case.PayAndTransformToOrderCommand;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,7 +56,7 @@ class PayAndTransformToOrderTest {
         when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
 
         // when
-        var result = payAndTransformToOrder.execute(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT);
+        var result = payAndTransformToOrder.execute(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT));
 
         // then
         assertThat(result).extracting(PayAndTransformToOrderResult::status,
@@ -75,7 +76,7 @@ class PayAndTransformToOrderTest {
                 .thenReturn(transactionToValidate);
 
         // when
-        var result = payAndTransformToOrder.execute(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT);
+        var result = payAndTransformToOrder.execute(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT));
 
         // then
         assertThat(result).extracting(PayAndTransformToOrderResult::status,
@@ -94,7 +95,7 @@ class PayAndTransformToOrderTest {
                 .thenReturn(failedTransaction);
 
         // when
-        var result = payAndTransformToOrder.execute(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT);
+        var result = payAndTransformToOrder.execute(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT));
 
         // then
         assertThat(result).extracting(PayAndTransformToOrderResult::status,
@@ -116,7 +117,7 @@ class PayAndTransformToOrderTest {
         when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(true);
 
         // when
-        var result = payAndTransformToOrder.execute(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT);
+        var result = payAndTransformToOrder.execute(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT));
 
         // then
         assertThat(result).extracting(PayAndTransformToOrderResult::status,
@@ -145,7 +146,7 @@ class PayAndTransformToOrderTest {
         when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(false);
 
         // when
-        var result = payAndTransformToOrder.execute(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT);
+        var result = payAndTransformToOrder.execute(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT));
 
         // then
         assertThat(result).extracting(PayAndTransformToOrderResult::status,
