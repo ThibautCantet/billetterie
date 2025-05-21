@@ -9,7 +9,6 @@ import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import com.billetterie.payment.domain.Payment;
 import com.billetterie.payment.domain.PaymentStatus;
 import com.billetterie.payment.domain.Transaction;
-import com.billetterie.payment.payment.use_case.PayAndTransformToOrderCommand;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
