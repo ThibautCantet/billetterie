@@ -7,6 +7,7 @@ import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import com.billetterie.payment.domain.PaymentStatus;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentDto;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentResultDto;
+import com.billetterie.payment.payment.use_case.PayAndTransformToOrderCommand;
 import com.billetterie.payment.use_case.PayAndTransformToOrder;
 import com.billetterie.payment.use_case.TransformToOrder;
 import lombok.extern.slf4j.Slf4j;
@@ -49,12 +50,13 @@ public class PaymentController {
     @PostMapping
     public PaymentResultDto processPayment(@RequestBody PaymentDto paymentDto) {
         PayAndTransformToOrderResult result = payAndTransformToOrder.execute(
+                new PayAndTransformToOrderCommand(
                 paymentDto.cartDto().id(),
                 paymentDto.creditCardDto().number(),
                 paymentDto.creditCardDto().expirationDate(),
                 paymentDto.creditCardDto().cypher(),
                 paymentDto.cartDto().amount(),
-                paymentDto.cartDto().type());
+                paymentDto.cartDto().type()));
 
         if (result.status() == FAILED) {
             return new PaymentResultDto(result.status());
