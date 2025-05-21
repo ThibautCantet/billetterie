@@ -8,6 +8,7 @@ import com.cantet.thibaut.payment.domain.PaymentStatus;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentDto;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentResultDto;
 import com.cantet.thibaut.payment.use_case.PayAndTransformToOrder;
+import com.cantet.thibaut.payment.use_case.PayAndTransformToOrderCommand;
 import com.cantet.thibaut.payment.use_case.TransformToOrder;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -49,11 +50,12 @@ public class PaymentController {
     @PostMapping
     public PaymentResultDto processPayment(@RequestBody PaymentDto paymentDto) {
         PayAndTransformToOrderResult result = payAndTransformToOrder.execute(
+                new PayAndTransformToOrderCommand(
                 paymentDto.cartDto().id(),
                 paymentDto.creditCardDto().number(),
                 paymentDto.creditCardDto().expirationDate(),
                 paymentDto.creditCardDto().cypher(),
-                paymentDto.cartDto().amount());
+                paymentDto.cartDto().amount()));
 
         if (result.status() == FAILED) {
             return new PaymentResultDto(result.status());
