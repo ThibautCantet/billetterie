@@ -1,6 +1,5 @@
 package com.cantet.thibaut.payment.use_case;
 
-import com.cantet.thibaut.payment.domain.Bank;
 import com.cantet.thibaut.payment.domain.CustomerSupport;
 import com.cantet.thibaut.payment.domain.Order;
 import com.cantet.thibaut.payment.domain.Orders;
@@ -15,13 +14,13 @@ public class TransformToOrder {
     private static final Logger LOGGER = LoggerFactory.getLogger(TransformToOrder.class);
 
     private final Orders orders;
-    private final Bank bank;
     private final CustomerSupport customerSupport;
+    private final CancelTransaction cancelTransaction;
 
-    public TransformToOrder(Orders orders, Bank bank, CustomerSupport customerSupport) {
+    public TransformToOrder(Orders orders, CustomerSupport customerSupport, CancelTransaction cancelTransaction) {
         this.orders = orders;
-        this.bank = bank;
         this.customerSupport = customerSupport;
+        this.cancelTransaction = cancelTransaction;
     }
 
     public PayAndTransformToOrderResult execute(TransformToOrderCommand command) {
@@ -29,7 +28,7 @@ public class TransformToOrder {
 
         if (order.isNotCompleted()) {
             LOGGER.warn("Cart not transformed to order: {}", command.cartId());
-            boolean cancel = bank.cancel(command.transactionId(), command.amount());
+            boolean cancel = cancelTransaction.execute(new CancelTransactionCommand(command.transactionId(), command.amount()));
             if (!cancel) {
                 LOGGER.error("Transaction cancellation failed: {}", command.transactionId());
                 customerSupport.alertTransactionFailure(command.transactionId(), command.cartId(), command.amount());
