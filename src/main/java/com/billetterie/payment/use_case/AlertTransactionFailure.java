@@ -17,11 +17,13 @@ public class AlertTransactionFailure implements CommandHandler<AlertTransactionF
     }
 
     public CommandResponse<Event> execute(AlertTransactionFailureCommand command) {
+        customerSupport.alertTransactionFailure(command.transactionId(), command.cartId(), command.amount());
+
         return new CommandResponse<>(List.of());
     }
 
     @Override
     public Class listenTo() {
-        return null;
+        return AlertTransactionFailureCommand.class;
     }
 }
