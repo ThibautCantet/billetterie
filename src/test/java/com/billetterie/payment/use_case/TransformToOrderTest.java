@@ -5,6 +5,7 @@ import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Order;
 import com.billetterie.payment.domain.Orders;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,7 +24,6 @@ public class TransformToOrderTest {
     private static final float AMOUNT = 100.0f;
     private static final String TRANSACTION_ID = "324234243234";
 
-    @InjectMocks
     private TransformToOrder transformToOrder;
 
     @Mock
@@ -33,6 +33,11 @@ public class TransformToOrderTest {
     private Bank bank;
     @Mock
     private CustomerSupport customerSupport;
+
+    @BeforeEach
+    void setUp() {
+        transformToOrder = new TransformToOrder(orders, customerSupport, new CancelTransaction(bank));
+    }
 
     @Test
     void should_return_ok_when_transform_to_order_succeeds() {
