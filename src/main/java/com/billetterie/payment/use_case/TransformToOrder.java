@@ -1,6 +1,5 @@
 package com.billetterie.payment.use_case;
 
-import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Order;
 import com.billetterie.payment.domain.Orders;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
@@ -14,13 +13,11 @@ public class TransformToOrder {
     private static final Logger LOGGER = LoggerFactory.getLogger(TransformToOrder.class);
 
     private final Orders orders;
-    private final CustomerSupport customerSupport;
     private final CancelTransaction cancelTransaction;
     private final AlertTransactionFailure alertTransactionFailure;
 
-    public TransformToOrder(Orders orders, CustomerSupport customerSupport, CancelTransaction cancelTransaction, AlertTransactionFailure alertTransactionFailure) {
+    public TransformToOrder(Orders orders, CancelTransaction cancelTransaction, AlertTransactionFailure alertTransactionFailure) {
         this.orders = orders;
-        this.customerSupport = customerSupport;
         this.cancelTransaction = cancelTransaction;
         this.alertTransactionFailure = alertTransactionFailure;
     }
@@ -33,7 +30,7 @@ public class TransformToOrder {
             boolean cancel = cancelTransaction.execute(new CancelTransactionCommand(command.transactionId(), command.amount()));
             if (!cancel) {
                 LOGGER.error("Transaction cancellation failed: {}", command.transactionId());
-                customerSupport.alertTransactionFailure(command.transactionId(), command.cartId(), command.amount());
+                alertTransactionFailure.execute(new AlertTransactionFailureCommand(command.transactionId(), command.cartId(), command.amount()));
             } else {
                 LOGGER.info("Transaction cancelled: {}", command.transactionId());
             }
