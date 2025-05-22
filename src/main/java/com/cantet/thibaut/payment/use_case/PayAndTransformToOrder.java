@@ -1,8 +1,6 @@
 package com.cantet.thibaut.payment.use_case;
 
-import com.cantet.thibaut.payment.domain.Bank;
 import com.cantet.thibaut.payment.domain.PayAndTransformToOrderResult;
-import com.cantet.thibaut.payment.domain.Payment;
 import com.cantet.thibaut.payment.domain.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,16 +12,16 @@ import static com.cantet.thibaut.payment.domain.PaymentStatus.*;
 public class PayAndTransformToOrder {
     private static final Logger LOGGER = LoggerFactory.getLogger(PayAndTransformToOrder.class);
 
-    private final Bank bank;
     private final TransformToOrder transformToOrder;
+    private final Pay pay;
 
-    public PayAndTransformToOrder(Bank bank, TransformToOrder transformToOrder) {
-        this.bank = bank;
+    public PayAndTransformToOrder(TransformToOrder transformToOrder, Pay pay) {
         this.transformToOrder = transformToOrder;
+        this.pay = pay;
     }
 
     public PayAndTransformToOrderResult execute(PayAndTransformToOrderCommand command) {
-        Transaction transaction = bank.pay(new Payment(command.cardNumber(), command.expirationDate(), command.cypher(), command.cartId(), command.amount()));
+        Transaction transaction = pay.execute(new PayCommand(command.cartId(), command.cardNumber(), command.expirationDate(), command.cypher(), command.amount()));
 
         if (transaction.isPending()) {
             var pendingTransaction = new PayAndTransformToOrderResult(
