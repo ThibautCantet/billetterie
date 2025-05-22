@@ -9,9 +9,9 @@ import com.cantet.thibaut.payment.domain.PayAndTransformToOrderResult;
 import com.cantet.thibaut.payment.domain.Payment;
 import com.cantet.thibaut.payment.domain.PaymentStatus;
 import com.cantet.thibaut.payment.domain.Transaction;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -29,7 +29,6 @@ class PayAndTransformToOrderTest {
     private static final float AMOUNT = 100.0f;
     private static final String TRANSACTION_ID = "324234243234";
 
-    @InjectMocks
     private PayAndTransformToOrder payAndTransformToOrder;
     @Mock
     private Bank bank;
@@ -38,6 +37,11 @@ class PayAndTransformToOrderTest {
     private Orders orders;
     @Mock
     private CustomerSupport customerSupport;
+
+    @BeforeEach
+    void setUp() {
+        payAndTransformToOrder = new PayAndTransformToOrder(bank, new TransformToOrder(orders, bank, customerSupport));
+    }
 
     @Test
     public void should_return_ok_when_payment_succeeds_and_transform_to_order_succeeds() {
