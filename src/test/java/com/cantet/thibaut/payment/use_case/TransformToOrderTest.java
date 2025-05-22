@@ -3,12 +3,13 @@ package com.cantet.thibaut.payment.use_case;
 import com.cantet.thibaut.payment.domain.Bank;
 import com.cantet.thibaut.payment.domain.CustomerSupport;
 import com.cantet.thibaut.payment.domain.Order;
+import com.cantet.thibaut.payment.domain.OrderCreated;
+import com.cantet.thibaut.payment.domain.OrderNotCreated;
 import com.cantet.thibaut.payment.domain.Orders;
-import com.cantet.thibaut.payment.domain.PayAndTransformToOrderResult;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -39,70 +40,77 @@ public class TransformToOrderTest {
         transformToOrder = new TransformToOrder(orders, new CancelTransaction(bank), new AlertTransactionFailure(customerSupport));
     }
 
-    @Test
-    void should_return_ok_when_transform_to_order_succeeds() {
-        // given
-        var order = new Order(ORDER_ID, AMOUNT);
-        when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
+    @Nested
+    class Execute {
+        @Test
+        void should_return_ok_when_transform_to_order_succeeds() {
+            // given
+            var order = new Order(ORDER_ID, AMOUNT);
+            when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
 
-        // when
-        var result = transformToOrder.execute(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT));
+            // when
+            var result = transformToOrder.execute(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT));
 
-        // then
-        assertThat(result).extracting(PayAndTransformToOrderResult::status,
-                PayAndTransformToOrderResult::transactionId,
-                PayAndTransformToOrderResult::orderId,
-                PayAndTransformToOrderResult::redirectUrl,
-                PayAndTransformToOrderResult::amount)
-                .containsExactly(SUCCESS, TRANSACTION_ID, ORDER_ID, "/confirmation/654654?amount=100.0", AMOUNT);
+            // then
+            assertThat(result.firstAs(OrderCreated.class)).extracting(OrderCreated::status,
+                            OrderCreated::transactionId,
+                            OrderCreated::orderId,
+                            OrderCreated::redirectUrl,
+                            OrderCreated::amount)
+                    .containsExactly(SUCCESS, TRANSACTION_ID, ORDER_ID, "/confirmation/654654?amount=100.0", AMOUNT);
+        }
+
+        @Test
+        void should_return_failed_and_cancel_transaction_when_transform_to_order_fails() {
+            // given
+            var order = new Order(null, 0f);
+            when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
+
+            when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(true);
+
+            // when
+            var result = transformToOrder.execute(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT));
+
+            // then
+            assertThat(result.firstAs(OrderNotCreated.class)).extracting(OrderNotCreated::amount,
+                            OrderNotCreated::transactionId,
+                            OrderNotCreated::redirectUrl)
+                    .containsExactly(AMOUNT,
+                            TRANSACTION_ID,
+                            "/cart?error=true&cartId=123456&amount=100.0");
+
+            verify(bank).cancel(TRANSACTION_ID, AMOUNT);
+
+            verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
+        }
+
+        @Test
+        void should_return_failed_and_alert_when_transform_to_order_fails_and_cancel_transaction_fails() {
+            // given
+            var order = new Order(null, 0f);
+            when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
+
+            when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(false);
+
+            // when
+            var result = transformToOrder.execute(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT));
+
+            // then
+            assertThat(result.firstAs(OrderNotCreated.class)).extracting(OrderNotCreated::status,
+                            OrderNotCreated::transactionId,
+                            OrderNotCreated::redirectUrl)
+                    .containsExactly(FAILED,
+                            TRANSACTION_ID,
+                            "/cart?error=true&cartId=123456&amount=100.0");
+
+            verify(bank).cancel(TRANSACTION_ID, AMOUNT);
+
+            verify(customerSupport).alertTransactionFailure(TRANSACTION_ID, CART_ID, AMOUNT);
+        }
     }
 
     @Test
-    void should_return_failed_and_cancel_transaction_when_transform_to_order_fails() {
-        // given
-        var order = new Order(null, 0f);
-        when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
-
-        when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(true);
-
-        // when
-        var result = transformToOrder.execute(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT));
-
-        // then
-        assertThat(result).extracting(PayAndTransformToOrderResult::status,
-                PayAndTransformToOrderResult::transactionId,
-                PayAndTransformToOrderResult::redirectUrl)
-                .containsExactly(FAILED,
-                        TRANSACTION_ID,
-                        "/cart?error=true&cartId=123456&amount=100.0");
-
-        verify(bank).cancel(TRANSACTION_ID, AMOUNT);
-
-        verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
+    void listenTo_should_return_TransformToOrderCommand() {
+        assertThat(transformToOrder.listenTo()).isEqualTo(TransformToOrderCommand.class);
     }
-
-    @Test
-    void should_return_failed_and_alert_when_transform_to_order_fails_and_cancel_transaction_fails() {
-        // given
-        var order = new Order(null, 0f);
-        when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
-
-        when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(false);
-
-        // when
-        var result = transformToOrder.execute(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT));
-
-        // then
-        assertThat(result).extracting(PayAndTransformToOrderResult::status,
-                PayAndTransformToOrderResult::transactionId,
-                PayAndTransformToOrderResult::redirectUrl)
-                .containsExactly(FAILED,
-                        TRANSACTION_ID,
-                        "/cart?error=true&cartId=123456&amount=100.0");
-
-        verify(bank).cancel(TRANSACTION_ID, AMOUNT);
-
-        verify(customerSupport).alertTransactionFailure(TRANSACTION_ID, CART_ID, AMOUNT);
-    }
-
 }

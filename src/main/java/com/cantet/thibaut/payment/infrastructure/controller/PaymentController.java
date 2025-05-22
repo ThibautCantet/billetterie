@@ -2,9 +2,12 @@ package com.cantet.thibaut.payment.infrastructure.controller;
 
 import java.net.URI;
 
-import com.cantet.thibaut.payment.domain.PayAndTransformToOrderResult;
-import com.cantet.thibaut.payment.domain.PayAndTransformToOrderResult;
+import com.cantet.thibaut.payment.common.cqrs.command.CommandResponse;
+import com.cantet.thibaut.payment.common.cqrs.event.Event;
+import com.cantet.thibaut.payment.domain.OrderCreated;
+import com.cantet.thibaut.payment.domain.OrderNotCreated;
 import com.cantet.thibaut.payment.domain.PaymentStatus;
+import com.cantet.thibaut.payment.domain.ValidationRequested;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentDto;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentResultDto;
 import com.cantet.thibaut.payment.use_case.PayAndTransformToOrder;
@@ -45,29 +48,38 @@ public class PaymentController {
     /**
      * Process the payment and transform it into an order.
      * Return data to redirect the user to the bank for payment or to the order confirmation page.
+     *
      * @param paymentDto the payment request
      * @return the payment result
      */
     @PostMapping
     public PaymentResultDto processPayment(@RequestBody PaymentDto paymentDto) {
-        PayAndTransformToOrderResult result = payAndTransformToOrder.execute(
+        var result = payAndTransformToOrder.execute(
                 new PayAndTransformToOrderCommand(
-                paymentDto.cartDto().id(),
-                paymentDto.creditCardDto().number(),
-                paymentDto.creditCardDto().expirationDate(),
-                paymentDto.creditCardDto().cypher(),
-                paymentDto.cartDto().amount()));
+                        paymentDto.cartDto().id(),
+                        paymentDto.creditCardDto().number(),
+                        paymentDto.creditCardDto().expirationDate(),
+                        paymentDto.creditCardDto().cypher(),
+                        paymentDto.cartDto().amount()));
 
-        if (result.status() == FAILED) {
-            return new PaymentResultDto(result.status());
-        }
-
-        return new PaymentResultDto(
-                result.status(),
-                result.orderId(),
-                result.amount(),
-                result.transactionId(),
-                result.redirectUrl());
+        return switch (result.first()) {
+            case OrderCreated(
+                    PaymentStatus status, String transactionId, String redirectUrl, String orderId, float amount
+            ) -> new PaymentResultDto(
+                    status,
+                    orderId,
+                    amount,
+                    transactionId,
+                    redirectUrl);
+            case ValidationRequested(
+                    PaymentStatus status, String transactionId, String redirectUrl, Float amount
+            ) -> new PaymentResultDto(status,
+                    null,
+                    amount,
+                    transactionId,
+                    redirectUrl);
+            case null, default -> new PaymentResultDto(FAILED);
+        };
     }
 
     @GetMapping("/cart/confirmation")
@@ -77,24 +89,25 @@ public class PaymentController {
             @RequestParam(name = "cartId") String cartId,
             @RequestParam(name = "amount") Float amount) {
         PaymentResultDto response;
-        PayAndTransformToOrderResult result;
+        CommandResponse<Event> result;
         var headers = new HttpHeaders();
         if (status.equals("ko")) {
             response = redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
         } else {
             result = transformToOrder.execute(new TransformToOrderCommand(transactionId, cartId, amount));
 
-            if (result.status() == PaymentStatus.FAILED) {
-                response = redirectToCartOnError(amount, result.redirectUrl(), headers);
+            if (result.first() instanceof OrderNotCreated orderNotCreated) {
+                response = redirectToCartOnError(amount, orderNotCreated.redirectUrl(), headers);
             } else {
-                headers.setLocation(URI.create(result.redirectUrl()));
+                var orderCreated = result.firstAs(OrderCreated.class);
+                headers.setLocation(URI.create(orderCreated.redirectUrl()));
                 response = new PaymentResultDto(
                         SUCCESS,
-                        result.orderId(),
-                        result.amount(),
-                        result.transactionId(),
-                        result.redirectUrl());
-                LOGGER.info("Transaction succeeded, redirecting to confirmation page: {} {}", result.redirectUrl(), response);
+                        orderCreated.orderId(),
+                        orderCreated.amount(),
+                        orderCreated.transactionId(),
+                        orderCreated.redirectUrl());
+                LOGGER.info("Transaction succeeded, redirecting to confirmation page: {} {}", orderCreated.redirectUrl(), response);
             }
         }
         return new ResponseEntity<>(response, headers, HttpStatusCode.valueOf(301));
