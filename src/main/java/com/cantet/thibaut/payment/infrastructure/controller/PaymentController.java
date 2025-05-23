@@ -2,8 +2,10 @@ package com.cantet.thibaut.payment.infrastructure.controller;
 
 import java.net.URI;
 
+import com.cantet.thibaut.payment.common.cqrs.application.CommandController;
 import com.cantet.thibaut.payment.common.cqrs.command.CommandResponse;
 import com.cantet.thibaut.payment.common.cqrs.event.Event;
+import com.cantet.thibaut.payment.common.cqrs.middleware.command.CommandBusFactory;
 import com.cantet.thibaut.payment.domain.OrderCreated;
 import com.cantet.thibaut.payment.domain.OrderNotCreated;
 import com.cantet.thibaut.payment.domain.PaymentStatus;
@@ -33,16 +35,13 @@ import static com.cantet.thibaut.payment.use_case.TransformToOrder.*;
 @RestController
 @RequestMapping(PaymentController.PATH)
 @Slf4j
-public class PaymentController {
+public class PaymentController extends CommandController {
     private static final Logger LOGGER = LoggerFactory.getLogger(PaymentController.class);
 
     public static final String PATH = "/api/payment";
-    private final PayAndTransformToOrder payAndTransformToOrder;
-    private final TransformToOrder transformToOrder;
 
-    public PaymentController(PayAndTransformToOrder payAndTransformToOrder, TransformToOrder transformToOrder) {
-        this.payAndTransformToOrder = payAndTransformToOrder;
-        this.transformToOrder = transformToOrder;
+    public PaymentController(CommandBusFactory commandBusFactory) {
+        super(commandBusFactory);
     }
 
     /**
@@ -54,7 +53,7 @@ public class PaymentController {
      */
     @PostMapping
     public PaymentResultDto processPayment(@RequestBody PaymentDto paymentDto) {
-        var result = payAndTransformToOrder.execute(
+        var result = getCommandBus().dispatch(
                 new PayAndTransformToOrderCommand(
                         paymentDto.cartDto().id(),
                         paymentDto.creditCardDto().number(),
@@ -94,7 +93,7 @@ public class PaymentController {
         if (status.equals("ko")) {
             response = redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
         } else {
-            result = transformToOrder.execute(new TransformToOrderCommand(transactionId, cartId, amount));
+            result = getCommandBus().dispatch(new TransformToOrderCommand(transactionId, cartId, amount));
 
             if (result.first() instanceof OrderNotCreated orderNotCreated) {
                 response = redirectToCartOnError(amount, orderNotCreated.redirectUrl(), headers);
