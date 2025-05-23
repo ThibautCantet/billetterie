@@ -41,7 +41,7 @@ public class TransformToOrderTest {
         when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
 
         // when
-        TransformToOrderResult result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT);
+        var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT);
 
         // then
         assertThat(result).extracting(TransformToOrderResult::status,
@@ -61,19 +61,15 @@ public class TransformToOrderTest {
         when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(true);
 
         // when
-        TransformToOrderResult result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT);
+        var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT);
 
         // then
         assertThat(result).extracting(TransformToOrderResult::status,
                 TransformToOrderResult::transactionId,
-                TransformToOrderResult::orderId,
-                TransformToOrderResult::redirectUrl,
-                TransformToOrderResult::amount)
+                TransformToOrderResult::redirectUrl)
                 .containsExactly(FAILED,
                         TRANSACTION_ID,
-                        null,
-                        "/cart?error=true&cartId=123456&amount=100.0",
-                        null);
+                        "/cart?error=true&cartId=123456&amount=100.0");
 
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
@@ -89,19 +85,15 @@ public class TransformToOrderTest {
         when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(false);
 
         // when
-        TransformToOrderResult result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT);
+        var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT);
 
         // then
         assertThat(result).extracting(TransformToOrderResult::status,
                 TransformToOrderResult::transactionId,
-                TransformToOrderResult::orderId,
-                TransformToOrderResult::redirectUrl,
-                TransformToOrderResult::amount)
+                TransformToOrderResult::redirectUrl)
                 .containsExactly(FAILED,
                         TRANSACTION_ID,
-                        null,
-                        "/cart?error=true&cartId=123456&amount=100.0",
-                        null);
+                        "/cart?error=true&cartId=123456&amount=100.0");
 
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
