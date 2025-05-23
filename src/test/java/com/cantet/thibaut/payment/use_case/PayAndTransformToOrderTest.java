@@ -7,7 +7,6 @@ import com.cantet.thibaut.payment.domain.Order;
 import com.cantet.thibaut.payment.domain.OrderCreated;
 import com.cantet.thibaut.payment.domain.OrderNotCreated;
 import com.cantet.thibaut.payment.domain.Orders;
-import com.cantet.thibaut.payment.domain.PayAndTransformToOrderResult;
 import com.cantet.thibaut.payment.domain.Payment;
 import com.cantet.thibaut.payment.domain.PaymentStatus;
 import com.cantet.thibaut.payment.domain.Transaction;
