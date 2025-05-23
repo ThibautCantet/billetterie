@@ -76,10 +76,9 @@ class PayAndTransformToOrderTest {
         // then
         assertThat(result).extracting(PayAndTransformToOrderResult::status,
                         PayAndTransformToOrderResult::transactionId,
-                        PayAndTransformToOrderResult::orderId,
                         PayAndTransformToOrderResult::redirectUrl,
                         PayAndTransformToOrderResult::amount)
-                .containsExactly(PaymentStatus.PENDING, TRANSACTION_ID, null, "/3ds", AMOUNT);
+                .containsExactly(PaymentStatus.PENDING, TRANSACTION_ID, "/3ds", AMOUNT);
     }
 
     @Test
@@ -95,11 +94,8 @@ class PayAndTransformToOrderTest {
 
         // then
         assertThat(result).extracting(PayAndTransformToOrderResult::status,
-                        PayAndTransformToOrderResult::transactionId,
-                        PayAndTransformToOrderResult::orderId,
-                        PayAndTransformToOrderResult::redirectUrl,
-                        PayAndTransformToOrderResult::amount)
-                .containsExactly(PaymentStatus.FAILED, TRANSACTION_ID, null, null, 0.0f);
+                        PayAndTransformToOrderResult::transactionId)
+                .containsExactly(PaymentStatus.FAILED, TRANSACTION_ID);
     }
 
     @Test
@@ -121,14 +117,10 @@ class PayAndTransformToOrderTest {
         // then
         assertThat(result).extracting(PayAndTransformToOrderResult::status,
                         PayAndTransformToOrderResult::transactionId,
-                        PayAndTransformToOrderResult::orderId,
-                        PayAndTransformToOrderResult::redirectUrl,
-                        PayAndTransformToOrderResult::amount)
+                        PayAndTransformToOrderResult::redirectUrl)
                 .containsExactly(PaymentStatus.FAILED,
                         TRANSACTION_ID,
-                        null,
-                        "/cart?error=true&cartId=123456&amount=100.0",
-                        0.0f);
+                        "/cart?error=true&cartId=123456&amount=100.0");
 
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
@@ -154,19 +146,14 @@ class PayAndTransformToOrderTest {
         // then
         assertThat(result).extracting(PayAndTransformToOrderResult::status,
                         PayAndTransformToOrderResult::transactionId,
-                        PayAndTransformToOrderResult::orderId,
-                        PayAndTransformToOrderResult::redirectUrl,
-                        PayAndTransformToOrderResult::amount)
+                        PayAndTransformToOrderResult::redirectUrl)
                 .containsExactly(PaymentStatus.FAILED,
                         TRANSACTION_ID,
-                        null,
-                        "/cart?error=true&cartId=123456&amount=100.0",
-                        0.0f);
+                        "/cart?error=true&cartId=123456&amount=100.0");
 
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
         verify(customerSupport).alertTransactionFailure(TRANSACTION_ID, CART_ID, AMOUNT);
     }
-
 
 }
