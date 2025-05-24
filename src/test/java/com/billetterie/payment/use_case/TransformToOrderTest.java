@@ -36,14 +36,14 @@ public class TransformToOrderTest {
     private CustomerSupport customerSupport;
     @Spy
     @InjectMocks
-    private CancelTransaction cancelTransaction;
+    private CancelTransactionHandler cancelTransactionHandler;
     @Spy
     @InjectMocks
     private AlertTransactionFailureHandler alertTransactionFailureHandler;
 
     @BeforeEach
     void setUp() {
-        transformToOrder = new TransformToOrder(orders, bank, customerSupport, cancelTransaction, alertTransactionFailureHandler);
+        transformToOrder = new TransformToOrder(orders, bank, customerSupport, cancelTransactionHandler, alertTransactionFailureHandler);
     }
 
     @Test
@@ -83,7 +83,7 @@ public class TransformToOrderTest {
                         TRANSACTION_ID,
                         "/cart?error=true&cartId=123456&amount=100.0");
 
-        verify(cancelTransaction).execute(new CancelTransactionCommand(TRANSACTION_ID, AMOUNT));
+        verify(cancelTransactionHandler).handle(new CancelTransactionCommand(TRANSACTION_ID, CART_ID, AMOUNT));
 
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
