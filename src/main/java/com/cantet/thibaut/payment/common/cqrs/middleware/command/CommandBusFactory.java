@@ -34,7 +34,7 @@ public class CommandBusFactory {
     protected List<CommandHandler> getCommandHandlers() {
         return List.of(
                 new Pay(bank),
-                new TransformToOrder(orders, cancelTransaction, alertTransactionFailure)
+                new TransformToOrder(orders)
         );
     }
 

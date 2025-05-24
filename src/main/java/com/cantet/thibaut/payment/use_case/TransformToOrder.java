@@ -3,7 +3,6 @@ package com.cantet.thibaut.payment.use_case;
 import com.cantet.thibaut.payment.common.cqrs.command.CommandHandler;
 import com.cantet.thibaut.payment.common.cqrs.command.CommandResponse;
 import com.cantet.thibaut.payment.common.cqrs.event.Event;
-import com.cantet.thibaut.payment.domain.CancelTransactionFailed;
 import com.cantet.thibaut.payment.domain.Order;
 import com.cantet.thibaut.payment.domain.OrderCreated;
 import com.cantet.thibaut.payment.domain.OrderNotCreated;
@@ -18,13 +17,9 @@ public class TransformToOrder implements CommandHandler<TransformToOrderCommand,
     private static final Logger LOGGER = LoggerFactory.getLogger(TransformToOrder.class);
 
     private final Orders orders;
-    private final CancelTransaction cancelTransaction;
-    private final AlertTransactionFailure alertTransactionFailure;
 
-    public TransformToOrder(Orders orders, CancelTransaction cancelTransaction, AlertTransactionFailure alertTransactionFailure) {
+    public TransformToOrder(Orders orders) {
         this.orders = orders;
-        this.cancelTransaction = cancelTransaction;
-        this.alertTransactionFailure = alertTransactionFailure;
     }
 
     public CommandResponse<Event> execute(TransformToOrderCommand command) {
@@ -32,13 +27,6 @@ public class TransformToOrder implements CommandHandler<TransformToOrderCommand,
 
         if (order.isNotCompleted()) {
             LOGGER.warn("Cart not transformed to order: {}", command.cartId());
-            var cancel = cancelTransaction.execute(new CancelTransactionCommand(command.transactionId(), command.amount()));
-            if (cancel.first() instanceof CancelTransactionFailed) {
-                LOGGER.error("Transaction cancellation failed: {}", command.transactionId());
-                alertTransactionFailure.execute(new AlertTransactionFailureCommand(command.transactionId(), command.cartId(), command.amount()));
-            } else {
-                LOGGER.info("Transaction cancelled: {}", command.transactionId());
-            }
 
             var orderNotCreated = new OrderNotCreated(
                     command.transactionId(),
