@@ -83,7 +83,7 @@ public class TransformToOrderTest {
                         TRANSACTION_ID,
                         "/cart?error=true&cartId=123456&amount=100.0");
 
-        verify(cancelTransaction).execute(new CancelTransactionCommand(TRANSACTION_ID, AMOUNT));
+        verify(cancelTransaction).execute(new CancelTransactionCommand(TRANSACTION_ID, CART_ID, AMOUNT));
 
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
