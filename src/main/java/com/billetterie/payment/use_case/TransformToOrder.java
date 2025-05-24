@@ -18,37 +18,13 @@ public class TransformToOrder implements CommandHandler<TransformToOrderCommand,
     private static final Logger LOGGER = LoggerFactory.getLogger(TransformToOrder.class);
 
     private final Orders orders;
-    private final CancelTransaction cancelTransaction;
-    private final AlertTransactionFailure alertTransactionFailure;
 
-    public TransformToOrder(Orders orders, CancelTransaction cancelTransaction, AlertTransactionFailure alertTransactionFailure) {
+    public TransformToOrder(Orders orders) {
         this.orders = orders;
-        this.cancelTransaction = cancelTransaction;
-        this.alertTransactionFailure = alertTransactionFailure;
     }
 
     public CommandResponse<Event> execute(TransformToOrderCommand command) {
         Order order = orders.transformToOrder(command.cartId(), command.amount());
-
-        if (order.isNotCompleted()) {
-            LOGGER.warn("Cart not transformed to order: {}", command.cartId());
-            var cancel = cancelTransaction.execute(new CancelTransactionCommand(command.transactionId(), command.cartId(), command.amount()));
-            if (cancel.first() instanceof CancelTransactionFailed) {
-                LOGGER.error("Transaction cancellation failed: {}", command.transactionId());
-                alertTransactionFailure.execute(new AlertTransactionFailureCommand(command.transactionId(), command.cartId(), command.amount()));
-            } else {
-                LOGGER.info("Transaction cancelled: {}", command.transactionId());
-            }
-
-            var orderNotCreated = new OrderNotCreated(
-                    command.transactionId(),
-                    command.amount(),
-                    getErrorCartUrl(command.cartId(), command.amount()),
-                    command.cartId());
-            LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", orderNotCreated);
-
-            return new CommandResponse<>(orderNotCreated);
-        }
 
         LOGGER.info("Cart transformed to order: {}", order.id());
         return new CommandResponse<>(new OrderCreated(
