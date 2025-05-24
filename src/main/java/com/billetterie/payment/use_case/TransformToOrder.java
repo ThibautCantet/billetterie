@@ -1,5 +1,6 @@
 package com.billetterie.payment.use_case;
 
+import com.billetterie.payment.domain.CancelTransactionFailed;
 import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.CartType;
 import com.billetterie.payment.domain.CustomerSupport;
@@ -17,14 +18,14 @@ public class TransformToOrder {
     private final Orders orders;
     private final Bank bank;
     private final CustomerSupport customerSupport;
-    private final CancelTransaction cancelTransaction;
+    private final CancelTransactionCommandHandler cancelTransactionCommandHandler;
     private final AlertTransactionFailureCommandHandler alertTransactionFailureCommandHandler;
 
-    public TransformToOrder(Orders orders, Bank bank, CustomerSupport customerSupport, CancelTransaction cancelTransaction, AlertTransactionFailureCommandHandler alertTransactionFailureCommandHandler) {
+    public TransformToOrder(Orders orders, Bank bank, CustomerSupport customerSupport, CancelTransactionCommandHandler cancelTransactionCommandHandler, AlertTransactionFailureCommandHandler alertTransactionFailureCommandHandler) {
         this.orders = orders;
         this.bank = bank;
         this.customerSupport = customerSupport;
-        this.cancelTransaction = cancelTransaction;
+        this.cancelTransactionCommandHandler = cancelTransactionCommandHandler;
         this.alertTransactionFailureCommandHandler = alertTransactionFailureCommandHandler;
     }
 
@@ -33,8 +34,8 @@ public class TransformToOrder {
 
         if (order.isNotCompleted()) {
             LOGGER.warn("Cart not transformed to order: {}", command.cartId());
-            boolean cancel = cancelTransaction.execute(new CancelTransactionCommand(command.transactionId(), command.amount()));
-            if (!cancel) {
+            var cancel = cancelTransactionCommandHandler.handle(new CancelTransactionCommand(command.transactionId(), command.cartId(), command.amount()));
+            if (cancel.first() instanceof CancelTransactionFailed) {
                 LOGGER.error("Transaction cancellation failed: {}", command.transactionId());
                 alertTransactionFailureCommandHandler.handle(new AlertTransactionFailureCommand(command.transactionId(), command.cartId(), command.amount()));
             } else {
