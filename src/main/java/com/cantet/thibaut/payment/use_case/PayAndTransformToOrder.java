@@ -17,7 +17,6 @@ public class PayAndTransformToOrder implements CommandHandler<PayAndTransformToO
     public CommandResponse<Event> execute(PayAndTransformToOrderCommand command) {
         return pay.execute(new PayCommand(command.cartId(), command.cardNumber(), command.expirationDate(), command.cypher(), command.amount()));
 /*
-
         if (transaction.isPending()) {
             var validationRequested = new ValidationRequested(
                     PENDING,
