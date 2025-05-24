@@ -46,7 +46,7 @@ class PayAndTransformToOrderTest {
 
     @Spy
     @InjectMocks
-    private CancelTransaction cancelTransaction;
+    private CancelTransactionCommandHandler cancelTransactionCommandHandler;
 
     @Spy
     @InjectMocks
@@ -56,7 +56,7 @@ class PayAndTransformToOrderTest {
     void setUp() {
         payAndTransformToOrder = new PayAndTransformToOrder(
                 bank,
-                new TransformToOrder(orders, bank, customerSupport, cancelTransaction, alertTransactionFailureCommandHandler),
+                new TransformToOrder(orders, bank, customerSupport, cancelTransactionCommandHandler, alertTransactionFailureCommandHandler),
                 pay);
     }
 
@@ -145,7 +145,7 @@ class PayAndTransformToOrderTest {
                         TRANSACTION_ID,
                         "/cart?error=true&cartId=123456&amount=100.0");
 
-        verify(cancelTransaction).execute(new CancelTransactionCommand(TRANSACTION_ID, AMOUNT));
+        verify(cancelTransactionCommandHandler).handle(new CancelTransactionCommand(TRANSACTION_ID, CART_ID, AMOUNT));
 
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
