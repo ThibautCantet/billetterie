@@ -19,7 +19,7 @@ public class CancelTransaction implements CommandHandler<CancelTransactionComman
     public CommandResponse<Event> execute(CancelTransactionCommand  command) {
         boolean cancel = bank.cancel(command.transactionId(), command.amount());
         if (!cancel) {
-            return new CommandResponse<>(new CancelTransactionFailed(command.transactionId()));
+            return new CommandResponse<>(new CancelTransactionFailed(command.transactionId(), command.cartId(), command.amount()));
         }
         return new CommandResponse<>(new CancelTransactionSucceeded(command.transactionId()));
     }
