@@ -35,7 +35,7 @@ class CancelTransactionTest {
     class Execute {
         @Test
         void should_return_Succeeded_when_transaction_canceled() {
-            var command = new CancelTransactionCommand(TRANSACTION_ID, AMOUNT, CART_ON_ERROR_URL);
+            var command = new CancelTransactionCommand(TRANSACTION_ID, AMOUNT, CART_ON_ERROR_URL, CART_ID);
             when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(true);
 
             var response = cancelTransaction.execute(command);
@@ -47,7 +47,7 @@ class CancelTransactionTest {
 
         @Test
         void should_return_Failed_when_transaction_not_canceled() {
-            var command = new CancelTransactionCommand(TRANSACTION_ID, AMOUNT, CART_ON_ERROR_URL);
+            var command = new CancelTransactionCommand(TRANSACTION_ID, AMOUNT, CART_ON_ERROR_URL, CART_ID);
             when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(false);
 
             var response = cancelTransaction.execute(command);

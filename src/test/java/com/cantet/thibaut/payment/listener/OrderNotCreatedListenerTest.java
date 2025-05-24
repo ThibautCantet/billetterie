@@ -16,6 +16,7 @@ public class OrderNotCreatedListenerTest {
     private static final String TRANSACTION_ID = "tx123";
     private static final float AMOUNT = 100.0f;
     private static final String CART_ON_ERROR_URL = "/cart?error=true&cartId=cartId&amount=100.0";
+    private static final String CART_ID = "cartId";
 
     private OrderNotCreatedListener orderNotCreatedListener;
 
@@ -34,8 +35,9 @@ public class OrderNotCreatedListenerTest {
                 .isExactlyInstanceOf(CancelTransactionCommand.class)
                 .asInstanceOf(InstanceOfAssertFactories.type(CancelTransactionCommand.class))
                 .extracting(CancelTransactionCommand::transactionId,
-                        CancelTransactionCommand::amount)
-                .containsExactly(TRANSACTION_ID, AMOUNT);
+                        CancelTransactionCommand::amount,
+                        CancelTransactionCommand::cartId)
+                .containsExactly(TRANSACTION_ID, AMOUNT, CART_ID);
     }
 
     @Test
