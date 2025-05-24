@@ -1,5 +1,6 @@
 package com.billetterie.payment.use_case;
 
+import com.billetterie.payment.domain.CancelTransactionFailed;
 import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Order;
@@ -33,8 +34,8 @@ public class TransformToOrder {
 
         if (order.isNotCompleted()) {
             LOGGER.warn("Cart not transformed to order: {}", command.cartId());
-            boolean cancel = cancelTransaction.execute(new CancelTransactionCommand(command.transactionId(), command.amount()));
-            if (!cancel) {
+            var cancel = cancelTransaction.execute(new CancelTransactionCommand(command.transactionId(), command.cartId(), command.amount()));
+            if (cancel.first() instanceof CancelTransactionFailed) {
                 LOGGER.error("Transaction cancellation failed: {}", command.transactionId());
                 alertTransactionFailure.execute(new AlertTransactionFailureCommand(command.transactionId(), command.cartId(), command.amount()));
             } else {
