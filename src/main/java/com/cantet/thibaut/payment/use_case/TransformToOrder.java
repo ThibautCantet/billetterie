@@ -31,7 +31,8 @@ public class TransformToOrder implements CommandHandler<TransformToOrderCommand,
             var orderNotCreated = new OrderNotCreated(
                     command.transactionId(),
                     command.amount(),
-                    getErrorCartUrl(command.cartId(), command.amount()));
+                    getErrorCartUrl(command.cartId(), command.amount()),
+                    command.cartId());
             LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", orderNotCreated);
 
             return new CommandResponse<>(orderNotCreated);
