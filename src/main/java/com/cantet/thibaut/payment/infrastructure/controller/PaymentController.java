@@ -12,9 +12,7 @@ import com.cantet.thibaut.payment.domain.PaymentStatus;
 import com.cantet.thibaut.payment.domain.ValidationRequested;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentDto;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentResultDto;
-import com.cantet.thibaut.payment.use_case.PayAndTransformToOrder;
-import com.cantet.thibaut.payment.use_case.PayAndTransformToOrderCommand;
-import com.cantet.thibaut.payment.use_case.TransformToOrder;
+import com.cantet.thibaut.payment.use_case.PayCommand;
 import com.cantet.thibaut.payment.use_case.TransformToOrderCommand;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -54,7 +52,7 @@ public class PaymentController extends CommandController {
     @PostMapping
     public PaymentResultDto processPayment(@RequestBody PaymentDto paymentDto) {
         var result = getCommandBus().dispatch(
-                new PayAndTransformToOrderCommand(
+                new PayCommand(
                         paymentDto.cartDto().id(),
                         paymentDto.creditCardDto().number(),
                         paymentDto.creditCardDto().expirationDate(),
