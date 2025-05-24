@@ -10,8 +10,6 @@ import com.cantet.thibaut.payment.common.cqrs.middleware.event.EventBusFactory;
 import com.cantet.thibaut.payment.domain.Bank;
 import com.cantet.thibaut.payment.domain.Orders;
 import com.cantet.thibaut.payment.listener.PaymentSucceededListener;
-import com.cantet.thibaut.payment.use_case.AlertTransactionFailure;
-import com.cantet.thibaut.payment.use_case.CancelTransaction;
 import com.cantet.thibaut.payment.use_case.Pay;
 import com.cantet.thibaut.payment.use_case.TransformToOrder;
 import org.springframework.stereotype.Service;
@@ -22,20 +20,16 @@ public class CommandBusFactory {
 
     private final Bank bank;
     private final Orders orders;
-    private final CancelTransaction cancelTransaction;
-    private final AlertTransactionFailure alertTransactionFailure;
 
-    public CommandBusFactory(Bank bank, Orders orders, CancelTransaction cancelTransaction, AlertTransactionFailure alertTransactionFailure) {
+    public CommandBusFactory(Bank bank, Orders orders) {
         this.bank = bank;
         this.orders = orders;
-        this.cancelTransaction = cancelTransaction;
-        this.alertTransactionFailure = alertTransactionFailure;
     }
 
     protected List<CommandHandler> getCommandHandlers() {
         return List.of(
                 new Pay(bank),
-                new TransformToOrder(orders, cancelTransaction, alertTransactionFailure)
+                new TransformToOrder(orders)
         );
     }
 
