@@ -41,11 +41,11 @@ public class TransformToOrderTest {
     private CancelTransaction cancelTransaction;
     @Spy
     @InjectMocks
-    private AlertTransactionFailure alertTransactionFailure;
+    private AlertTransactionFailureCommandHandler alertTransactionFailureCommandHandler;
 
     @BeforeEach
     void setUp() {
-        transformToOrder = new TransformToOrder(orders, bank, customerSupport, cancelTransaction, alertTransactionFailure);
+        transformToOrder = new TransformToOrder(orders, bank, customerSupport, cancelTransaction, alertTransactionFailureCommandHandler);
     }
 
     @Nested
@@ -91,7 +91,7 @@ public class TransformToOrderTest {
 
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
-            verify(alertTransactionFailure, never()).execute(any());verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
+            verify(alertTransactionFailureCommandHandler, never()).handle(any());verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
         }
 
         @Test
