@@ -9,7 +9,7 @@ public class OrderNotCreatedListener extends EventHandlerCommand<OrderNotCreated
 
     @Override
     public Command execute(OrderNotCreated event) {
-        return new CancelTransactionCommand(event.transactionId(), event.amount(), event.redirectUrl());
+        return new CancelTransactionCommand(event.transactionId(), event.amount(), event.redirectUrl(), event.cartId());
     }
 
     @Override

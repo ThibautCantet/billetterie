@@ -19,6 +19,7 @@ class CancelTransactionTest {
     private static final String TRANSACTION_ID = "tx123";
     private static final float AMOUNT = 100f;
     private static final String CART_ON_ERROR_URL = "/cart?error=true&cartId=cartId&amount=100.0";
+    private static final String CART_ID = "cartId";
 
     private CancelTransaction cancelTransaction;
 
@@ -52,8 +53,10 @@ class CancelTransactionTest {
             var response = cancelTransaction.execute(command);
 
             assertThat(response.firstAs(CancelTransactionFailed.class))
-                    .extracting(CancelTransactionFailed::transactionId)
-                    .isEqualTo(TRANSACTION_ID);
+                    .extracting(CancelTransactionFailed::transactionId,
+                                CancelTransactionFailed::cartId,
+                                CancelTransactionFailed::amount)
+                    .containsExactly(TRANSACTION_ID, CART_ID, AMOUNT);
         }
     }
 
