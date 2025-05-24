@@ -33,23 +33,19 @@ public class EventBusDispatcher implements EventBus {
 
         var commands = new ArrayList<Command>();
         for (var handler : eventHandlers) {
-            switch (handler.getType()) {
-                case COMMAND:
-                    Command command = ((EventHandlerCommand) handler).execute(event);
-                    if (command != null) {
-                        commands.add(command);
-                    }
-                    break;
-                case EVENT:
-                    Event newEvent = ((EventHandlerEvent) handler).execute(event);
-                    if (newEvent != null) {
-                        this.publish(newEvent);
-                        publishedEvents.add(newEvent);
-                    }
-                    break;
-                case VOID:
-                    ((EventHandlerVoid) handler).execute(event);
-                    break;
+            if (handler instanceof EventHandlerCommand eventHandlerCommand) {
+                Command command = eventHandlerCommand.execute(event);
+                if (command != null) {
+                    commands.add(command);
+                }
+            } else if (handler instanceof EventHandlerEvent eventHandlerEvent) {
+                Event newEvent = eventHandlerEvent.execute(event);
+                if (newEvent != null) {
+                    this.publish(newEvent);
+                    publishedEvents.add(newEvent);
+                }
+            } else if (handler instanceof EventHandlerVoid eventHandlerVoid) {
+                eventHandlerVoid.execute(event);
             }
         }
 
