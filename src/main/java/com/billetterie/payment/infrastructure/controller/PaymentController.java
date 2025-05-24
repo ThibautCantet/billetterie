@@ -2,6 +2,7 @@ package com.billetterie.payment.infrastructure.controller;
 
 import java.net.URI;
 
+import com.billetterie.payment.common.cqrs.application.CommandController;
 import com.billetterie.payment.domain.OrderCreated;
 import com.billetterie.payment.domain.OrderNotCreated;
 import com.billetterie.payment.domain.PaymentStatus;
@@ -31,6 +32,7 @@ import static com.billetterie.payment.use_case.TransformToOrderCommandHandler.*;
 @RestController
 @RequestMapping(PaymentController.PATH)
 @Slf4j
+//TODO extends CommandController
 public class PaymentController {
     private static final Logger LOGGER = LoggerFactory.getLogger(PaymentController.class);
 
@@ -38,6 +40,7 @@ public class PaymentController {
     private final PayAndTransformToOrderCommandHandler payAndTransformToOrderCommandHandler;
     private final TransformToOrderCommandHandler transformToOrderCommandHandler;
 
+    //TODO: replace PayAndTransformToOrder by a command bus factory and call super(commandBusFactory)
     public PaymentController(PayAndTransformToOrderCommandHandler payAndTransformToOrderCommandHandler, TransformToOrderCommandHandler transformToOrderCommandHandler) {
         this.payAndTransformToOrderCommandHandler = payAndTransformToOrderCommandHandler;
         this.transformToOrderCommandHandler = transformToOrderCommandHandler;
@@ -51,6 +54,7 @@ public class PaymentController {
      */
     @PostMapping
     public PaymentResultDto processPayment(@RequestBody PaymentDto paymentDto) {
+        //TODO: replace use case by a command bus factory to dispatch PayCommand
         var result = payAndTransformToOrderCommandHandler.handle(
                 new PayAndTransformToOrderCommand(
                 paymentDto.cartDto().id(),
