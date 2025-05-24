@@ -26,7 +26,7 @@ public class OrderNotCreatedListenerTest {
 
     @Test
     void should_return_new_CancelCommand() {
-        var orderNotCreated = new OrderNotCreated(TRANSACTION_ID, AMOUNT, CART_ON_ERROR_URL);
+        var orderNotCreated = new OrderNotCreated(TRANSACTION_ID, AMOUNT, CART_ON_ERROR_URL, CART_ID);
 
         var command = orderNotCreatedListener.execute(orderNotCreated);
 
