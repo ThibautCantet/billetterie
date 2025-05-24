@@ -1,4 +1,6 @@
 package com.billetterie.payment.use_case;
 
-public record CancelTransactionCommand(String transactionId, Float amount) {
+import com.billetterie.payment.common.cqrs.command.Command;
+
+public record CancelTransactionCommand(String transactionId, String cartId, Float amount) implements Command {
 }
