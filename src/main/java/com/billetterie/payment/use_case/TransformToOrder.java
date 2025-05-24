@@ -17,14 +17,14 @@ public class TransformToOrder {
     private final Bank bank;
     private final CustomerSupport customerSupport;
     private final CancelTransaction cancelTransaction;
-    private final AlertTransactionFailure alertTransactionFailure;
+    private final AlertTransactionFailureCommandHandler alertTransactionFailureCommandHandler;
 
-    public TransformToOrder(Orders orders, Bank bank, CustomerSupport customerSupport, CancelTransaction cancelTransaction, AlertTransactionFailure alertTransactionFailure) {
+    public TransformToOrder(Orders orders, Bank bank, CustomerSupport customerSupport, CancelTransaction cancelTransaction, AlertTransactionFailureCommandHandler alertTransactionFailureCommandHandler) {
         this.orders = orders;
         this.bank = bank;
         this.customerSupport = customerSupport;
         this.cancelTransaction = cancelTransaction;
-        this.alertTransactionFailure = alertTransactionFailure;
+        this.alertTransactionFailureCommandHandler = alertTransactionFailureCommandHandler;
     }
 
     public PayAndTransformToOrderResult execute(TransformToOrderCommand command) {
@@ -35,8 +35,7 @@ public class TransformToOrder {
             boolean cancel = cancelTransaction.execute(new CancelTransactionCommand(command.transactionId(), command.amount()));
             if (!cancel) {
                 LOGGER.error("Transaction cancellation failed: {}", command.transactionId());
-                //TODO: use the AlertTransactionFailure use case to alert customer support
-                customerSupport.alertTransactionFailure(command.transactionId(), command.cartId(), command.amount());
+                alertTransactionFailureCommandHandler.handle(new AlertTransactionFailureCommand(command.transactionId(), command.cartId(), command.amount()));
             } else {
                 LOGGER.info("Transaction cancelled: {}", command.transactionId());
             }
