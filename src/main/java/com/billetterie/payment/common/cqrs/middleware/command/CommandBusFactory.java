@@ -18,11 +18,13 @@ public class CommandBusFactory {
 
     protected List<CommandHandler> getCommandHandlers() {
         return List.of(
+                //TODO: add Pay and TransformToOrder handlers
         );
     }
 
     protected List<EventHandler<? extends Event>> getEventHandlers() {
         return List.of(
+                //TODO: add PaymentSucceededListener listener
         );
     }
 
