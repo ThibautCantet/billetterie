@@ -4,11 +4,12 @@ import java.net.URI;
 
 import com.billetterie.payment.domain.OrderCreated;
 import com.billetterie.payment.domain.OrderNotCreated;
-import com.billetterie.payment.domain.PayAndTransformToOrderResult;
+import com.billetterie.payment.domain.PaymentStatus;
+import com.billetterie.payment.domain.ValidationRequested;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentDto;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentResultDto;
 import com.billetterie.payment.use_case.PayAndTransformToOrderCommand;
-import com.billetterie.payment.use_case.PayAndTransformToOrder;
+import com.billetterie.payment.use_case.PayAndTransformToOrderCommandHandler;
 import com.billetterie.payment.use_case.TransformToOrderCommandHandler;
 import com.billetterie.payment.use_case.TransformToOrderCommand;
 import lombok.extern.slf4j.Slf4j;
@@ -34,11 +35,11 @@ public class PaymentController {
     private static final Logger LOGGER = LoggerFactory.getLogger(PaymentController.class);
 
     public static final String PATH = "/api/payment";
-    private final PayAndTransformToOrder payAndTransformToOrder;
+    private final PayAndTransformToOrderCommandHandler payAndTransformToOrderCommandHandler;
     private final TransformToOrderCommandHandler transformToOrderCommandHandler;
 
-    public PaymentController(PayAndTransformToOrder payAndTransformToOrder, TransformToOrderCommandHandler transformToOrderCommandHandler) {
-        this.payAndTransformToOrder = payAndTransformToOrder;
+    public PaymentController(PayAndTransformToOrderCommandHandler payAndTransformToOrderCommandHandler, TransformToOrderCommandHandler transformToOrderCommandHandler) {
+        this.payAndTransformToOrderCommandHandler = payAndTransformToOrderCommandHandler;
         this.transformToOrderCommandHandler = transformToOrderCommandHandler;
     }
 
@@ -50,7 +51,7 @@ public class PaymentController {
      */
     @PostMapping
     public PaymentResultDto processPayment(@RequestBody PaymentDto paymentDto) {
-        PayAndTransformToOrderResult result = payAndTransformToOrder.execute(
+        var result = payAndTransformToOrderCommandHandler.handle(
                 new PayAndTransformToOrderCommand(
                 paymentDto.cartDto().id(),
                 paymentDto.creditCardDto().number(),
@@ -58,16 +59,24 @@ public class PaymentController {
                 paymentDto.creditCardDto().cypher(),
                 paymentDto.cartDto().amount()));
 
-        if (result.status() == FAILED) {
-            return new PaymentResultDto(result.status());
-        }
-
-        return new PaymentResultDto(
-                result.status(),
-                result.orderId(),
-                result.amount(),
-                result.transactionId(),
-                result.redirectUrl());
+        return switch (result.first()) {
+            case OrderCreated(
+                    PaymentStatus status, String transactionId, String redirectUrl, String orderId, float amount
+            ) -> new PaymentResultDto(
+                    status,
+                    orderId,
+                    amount,
+                    transactionId,
+                    redirectUrl);
+            case ValidationRequested(
+                    PaymentStatus status, String transactionId, String redirectUrl, Float amount
+            ) -> new PaymentResultDto(status,
+                    null,
+                    amount,
+                    transactionId,
+                    redirectUrl);
+            case null, default -> new PaymentResultDto(FAILED);
+        };
     }
 
     @GetMapping("/cart/confirmation")
