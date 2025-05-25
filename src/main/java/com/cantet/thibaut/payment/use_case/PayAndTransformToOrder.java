@@ -3,14 +3,13 @@ package com.cantet.thibaut.payment.use_case;
 import com.cantet.thibaut.payment.common.cqrs.command.CommandHandler;
 import com.cantet.thibaut.payment.common.cqrs.command.CommandResponse;
 import com.cantet.thibaut.payment.common.cqrs.event.Event;
-import com.cantet.thibaut.payment.domain.Transaction;
+import com.cantet.thibaut.payment.domain.PaymentSucceeded;
 import com.cantet.thibaut.payment.domain.TransactionFailed;
 import com.cantet.thibaut.payment.domain.ValidationRequested;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import static com.cantet.thibaut.payment.domain.PaymentStatus.*;
 
 @Service
 public class PayAndTransformToOrder implements CommandHandler<PayAndTransformToOrderCommand, CommandResponse<Event>> {
@@ -25,31 +24,22 @@ public class PayAndTransformToOrder implements CommandHandler<PayAndTransformToO
     }
 
     public CommandResponse<Event> execute(PayAndTransformToOrderCommand command) {
-        var response = pay.execute(new PayCommand(command.cartId(), command.cardNumber(), command.expirationDate(), command.cypher(), command.amount()));
+        var transaction = pay.execute(new PayCommand(command.cartId(), command.cardNumber(), command.expirationDate(), command.cypher(), command.amount()));
 
-        Transaction transaction = new Transaction(null, null, null);
-
-        if (transaction.isPending()) {
-            var validationRequested = new ValidationRequested(
-                    PENDING,
-                    transaction.id(),
-                    transaction.redirectionUrl(),
-                    command.amount());
+        if (transaction.first() instanceof ValidationRequested validationRequested) {
             LOGGER.info("Transaction is pending: {}", validationRequested);
             return new CommandResponse<>(validationRequested);
         }
 
-        if (!transaction.hasSucceeded()) {
-            var failedTransaction = new TransactionFailed(
-                    transaction.status(),
-                    transaction.id());
-            LOGGER.info("Transaction failed: {}", failedTransaction);
-            return new CommandResponse<>(failedTransaction);
+        if (transaction.first() instanceof TransactionFailed transactionFailed) {
+            LOGGER.info("Transaction failed: {}", transactionFailed);
+            return new CommandResponse<>(transactionFailed);
         }
 
-        LOGGER.info("Transaction for cart transactionId {} succeeded, with transaction transactionId:{}", command.cartId(), transaction.id());
+        String transactionId = transaction.firstAs(PaymentSucceeded.class).transactionId();
+        LOGGER.info("Transaction for cart transactionId {} succeeded, with transaction transactionId:{}", command.cartId(), transactionId);
 
-        return transformToOrder.execute(new TransformToOrderCommand(transaction.id(), command.cartId(), command.amount()));
+        return transformToOrder.execute(new TransformToOrderCommand(transactionId, command.cartId(), command.amount()));
     }
 
     @Override
