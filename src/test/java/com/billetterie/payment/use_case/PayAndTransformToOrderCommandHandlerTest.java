@@ -47,7 +47,7 @@ class PayAndTransformToOrderCommandHandlerTest {
 
     @Spy
     @InjectMocks
-    private Pay pay;
+    private PayCommandHandler payCommandHandler;
 
     @Spy
     @InjectMocks
@@ -62,7 +62,7 @@ class PayAndTransformToOrderCommandHandlerTest {
         payAndTransformToOrderCommandHandler = new PayAndTransformToOrderCommandHandler(
                 bank,
                 new TransformToOrderCommandHandler(orders, bank, customerSupport, cancelTransactionCommandHandler, alertTransactionFailureCommandHandler),
-                pay);
+                payCommandHandler);
     }
 
     @Nested
