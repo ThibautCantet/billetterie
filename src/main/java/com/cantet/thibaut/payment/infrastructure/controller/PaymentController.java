@@ -6,6 +6,7 @@ import com.cantet.thibaut.payment.common.cqrs.application.CommandController;
 import com.cantet.thibaut.payment.common.cqrs.command.CommandResponse;
 import com.cantet.thibaut.payment.common.cqrs.event.Event;
 import com.cantet.thibaut.payment.common.cqrs.middleware.command.CommandBusFactory;
+import com.cantet.thibaut.payment.domain.CancelTransactionSucceeded;
 import com.cantet.thibaut.payment.domain.OrderCreated;
 import com.cantet.thibaut.payment.domain.OrderNotCreated;
 import com.cantet.thibaut.payment.domain.PaymentStatus;
@@ -95,8 +96,7 @@ public class PaymentController extends CommandController {
 
             if (result.first() instanceof OrderNotCreated orderNotCreated) {
                 response = redirectToCartOnError(amount, orderNotCreated.redirectUrl(), headers);
-            } else {
-                var orderCreated = result.firstAs(OrderCreated.class);
+            } else if (result.first() instanceof OrderCreated orderCreated) {
                 headers.setLocation(URI.create(orderCreated.redirectUrl()));
                 response = new PaymentResultDto(
                         SUCCESS,
@@ -105,6 +105,8 @@ public class PaymentController extends CommandController {
                         orderCreated.transactionId(),
                         orderCreated.redirectUrl());
                 LOGGER.info("Transaction succeeded, redirecting to confirmation page: {} {}", orderCreated.redirectUrl(), response);
+            } else {
+                response = redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
             }
         }
         return new ResponseEntity<>(response, headers, HttpStatusCode.valueOf(301));

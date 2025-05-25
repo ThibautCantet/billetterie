@@ -30,6 +30,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
@@ -57,7 +58,7 @@ public class PaymentATest extends ATest {
     private final WireMockConfiguration port = options().port(PORT);
     private final WireMockServer wireMockServer = new WireMockServer(port);
 
-    @MockitoSpyBean
+    @MockitoBean
     private EmailCustomerSupport emailCustomerSupport;
 
     @Before
