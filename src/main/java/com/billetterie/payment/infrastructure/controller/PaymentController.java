@@ -2,14 +2,15 @@ package com.billetterie.payment.infrastructure.controller;
 
 import java.net.URI;
 
+import com.billetterie.payment.domain.OrderCreated;
+import com.billetterie.payment.domain.OrderNotCreated;
 import com.billetterie.payment.domain.CartType;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
-import com.billetterie.payment.domain.PaymentStatus;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentDto;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentResultDto;
 import com.billetterie.payment.use_case.PayAndTransformToOrderCommand;
 import com.billetterie.payment.use_case.PayAndTransformToOrder;
-import com.billetterie.payment.use_case.TransformToOrder;
+import com.billetterie.payment.use_case.TransformToOrderCommandHandler;
 import com.billetterie.payment.use_case.TransformToOrderCommand;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -25,7 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import static com.billetterie.payment.domain.PaymentStatus.*;
-import static com.billetterie.payment.use_case.TransformToOrder.*;
+import static com.billetterie.payment.use_case.TransformToOrderCommandHandler.*;
 
 @RestController
 @RequestMapping(PaymentController.PATH)
@@ -35,11 +36,11 @@ public class PaymentController {
 
     public static final String PATH = "/api/payment";
     private final PayAndTransformToOrder payAndTransformToOrder;
-    private final TransformToOrder transformToOrder;
+    private final TransformToOrderCommandHandler transformToOrderCommandHandler;
 
-    public PaymentController(PayAndTransformToOrder payAndTransformToOrder, TransformToOrder transformToOrder) {
+    public PaymentController(PayAndTransformToOrder payAndTransformToOrder, TransformToOrderCommandHandler transformToOrderCommandHandler) {
         this.payAndTransformToOrder = payAndTransformToOrder;
-        this.transformToOrder = transformToOrder;
+        this.transformToOrderCommandHandler = transformToOrderCommandHandler;
     }
 
     /**
@@ -79,7 +80,6 @@ public class PaymentController {
             @RequestParam(name = "amount") Float amount,
             @RequestParam(name = "cartType") CartType type) {
         PaymentResultDto response;
-        PayAndTransformToOrderResult result;
         var headers = new HttpHeaders();
         String url;
         if (type == CartType.CLASSIC) {
@@ -95,19 +95,21 @@ public class PaymentController {
             }
             response = redirectToCartOnError(amount, url, headers);
         } else {
-            result = transformToOrder.execute(new TransformToOrderCommand(transactionId, cartId, amount, type));
+            var result = transformToOrderCommandHandler.handle(new TransformToOrderCommand(transactionId, cartId, amount, type));
 
-            if (result.status() == PaymentStatus.FAILED) {
+            if (result.first() instanceof OrderNotCreated orderNotCreated) {
                 response = redirectToCartOnError(amount, url, headers);
-            } else {
-                headers.setLocation(URI.create(result.redirectUrl()));
+            } else if (result.first() instanceof OrderCreated orderCreated) {
+                headers.setLocation(URI.create(orderCreated.redirectUrl()));
                 response = new PaymentResultDto(
                         SUCCESS,
-                        result.orderId(),
-                        result.amount(),
-                        result.transactionId(),
-                        result.redirectUrl());
-                LOGGER.info("Transaction succeeded, redirecting to confirmation page: {} {}", result.redirectUrl(), response);
+                        orderCreated.orderId(),
+                        orderCreated.amount(),
+                        orderCreated.transactionId(),
+                        orderCreated.redirectUrl());
+                LOGGER.info("Transaction succeeded, redirecting to confirmation page: {} {}", orderCreated.redirectUrl(), response);
+            } else {
+                response = redirectToCartOnError(amount, url, headers);
             }
         }
         return new ResponseEntity<>(response, headers, HttpStatusCode.valueOf(301));
