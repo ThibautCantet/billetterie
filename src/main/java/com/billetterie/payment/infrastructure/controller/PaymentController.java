@@ -2,6 +2,8 @@ package com.billetterie.payment.infrastructure.controller;
 
 import java.net.URI;
 
+import com.billetterie.payment.domain.OrderCreated;
+import com.billetterie.payment.domain.OrderNotCreated;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import com.billetterie.payment.domain.PaymentStatus;
@@ -77,24 +79,25 @@ public class PaymentController {
             @RequestParam(name = "cartId") String cartId,
             @RequestParam(name = "amount") Float amount) {
         PaymentResultDto response;
-        PayAndTransformToOrderResult result;
         var headers = new HttpHeaders();
         if (status.equals("ko")) {
             response = redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
         } else {
-            result = transformToOrder.execute(new TransformToOrderCommand(transactionId, cartId, amount));
+            var result = transformToOrder.execute(new TransformToOrderCommand(transactionId, cartId, amount));
 
-            if (result.status() == PaymentStatus.FAILED) {
-                response = redirectToCartOnError(amount, result.redirectUrl(), headers);
-            } else {
-                headers.setLocation(URI.create(result.redirectUrl()));
+            if (result.first() instanceof OrderNotCreated orderNotCreated) {
+                response = redirectToCartOnError(amount, orderNotCreated.redirectUrl(), headers);
+            } else if (result.first() instanceof OrderCreated orderCreated) {
+                headers.setLocation(URI.create(orderCreated.redirectUrl()));
                 response = new PaymentResultDto(
                         SUCCESS,
-                        result.orderId(),
-                        result.amount(),
-                        result.transactionId(),
-                        result.redirectUrl());
-                LOGGER.info("Transaction succeeded, redirecting to confirmation page: {} {}", result.redirectUrl(), response);
+                        orderCreated.orderId(),
+                        orderCreated.amount(),
+                        orderCreated.transactionId(),
+                        orderCreated.redirectUrl());
+                LOGGER.info("Transaction succeeded, redirecting to confirmation page: {} {}", orderCreated.redirectUrl(), response);
+            } else {
+                response = redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
             }
         }
         return new ResponseEntity<>(response, headers, HttpStatusCode.valueOf(301));
