@@ -1,5 +1,7 @@
 package com.cantet.thibaut.payment.use_case;
 
+import com.cantet.thibaut.payment.common.cqrs.command.CommandResponse;
+import com.cantet.thibaut.payment.common.cqrs.event.Event;
 import com.cantet.thibaut.payment.domain.PayAndTransformToOrderResult;
 import com.cantet.thibaut.payment.domain.Transaction;
 import org.slf4j.Logger;
@@ -47,6 +49,8 @@ public class PayAndTransformToOrder {
 
         LOGGER.info("Transaction for cart id {} succeeded, with transaction id:{}", command.cartId(), transaction.id());
 
-        return transformToOrder.execute(new TransformToOrderCommand(transaction.id(), command.cartId(), command.amount()));
+        var response = transformToOrder.execute(new TransformToOrderCommand(transaction.id(), command.cartId(), command.amount()));
+
+        return null;
     }
 }

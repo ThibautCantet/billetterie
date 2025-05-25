@@ -1,5 +1,8 @@
 package com.cantet.thibaut.payment.use_case;
 
+import com.cantet.thibaut.payment.common.cqrs.command.CommandHandler;
+import com.cantet.thibaut.payment.common.cqrs.command.CommandResponse;
+import com.cantet.thibaut.payment.common.cqrs.event.Event;
 import com.cantet.thibaut.payment.domain.CancelTransactionFailed;
 import com.cantet.thibaut.payment.domain.Order;
 import com.cantet.thibaut.payment.domain.Orders;
@@ -10,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
-public class TransformToOrder {
+public class TransformToOrder implements CommandHandler<TransformToOrderCommand, CommandResponse<Event>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TransformToOrder.class);
 
     private final Orders orders;
@@ -23,7 +26,7 @@ public class TransformToOrder {
         this.alertTransactionFailure = alertTransactionFailure;
     }
 
-    public PayAndTransformToOrderResult execute(TransformToOrderCommand command) {
+    public CommandResponse<Event> execute(TransformToOrderCommand command) {
         Order order = orders.transformToOrder(command.cartId(), command.amount());
 
         if (order.isNotCompleted()) {
@@ -44,16 +47,23 @@ public class TransformToOrder {
                     null);
             LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", payAndTransformToOrderResult);
 
-            return payAndTransformToOrderResult;
+            return null;
         }
 
         LOGGER.info("Cart transformed to order: {}", order.id());
-        return new PayAndTransformToOrderResult(
+        new PayAndTransformToOrderResult(
                 PaymentStatus.SUCCESS,
                 command.transactionId(),
                 String.format("/confirmation/%s?amount=%s", order.id(), command.amount()),
                 order.id(),
                 command.amount());
+
+        return null;
+    }
+
+    @Override
+    public Class listenTo() {
+        return null;
     }
 
     public static String getErrorCartUrl(String cartId, float amount) {
