@@ -4,6 +4,9 @@ import com.billetterie.payment.common.cqrs.command.CommandHandler;
 import com.billetterie.payment.common.cqrs.command.CommandResponse;
 import com.billetterie.payment.common.cqrs.event.Event;
 import com.billetterie.payment.domain.Bank;
+import com.billetterie.payment.domain.PaymentSucceeded;
+import com.billetterie.payment.domain.TransactionFailed;
+import com.billetterie.payment.domain.ValidationRequested;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import com.billetterie.payment.domain.Transaction;
 import org.slf4j.Logger;
@@ -16,18 +19,19 @@ public class PayAndTransformToOrderCommandHandler implements CommandHandler<PayA
 
     private final Bank bank;
     private final TransformToOrderCommandHandler transformToOrderCommandHandler;
-    private final Pay pay;
+    private final PayCommandHandler pay;
 
-    public PayAndTransformToOrderCommandHandler(Bank bank, TransformToOrderCommandHandler transformToOrderCommandHandler, Pay pay) {
+    public PayAndTransformToOrderCommandHandler(Bank bank, TransformToOrderCommandHandler transformToOrderCommandHandler, PayCommandHandler pay) {
         this.bank = bank;
         this.transformToOrderCommandHandler = transformToOrderCommandHandler;
         this.pay = pay;
     }
 
     public CommandResponse<Event> handle(PayAndTransformToOrderCommand command) {
-        Transaction transaction = pay.execute(new PayCommand(command.cartId(), command.cardNumber(), command.expirationDate(), command.cypher(), command.amount()));
+        var response = pay.handle(new PayCommand(command.cartId(), command.cardNumber(), command.expirationDate(), command.cypher(), command.amount()));
 
-        if (transaction.isPending()) {
+        var transaction = new Transaction("id", null, null);
+        if (response.first() instanceof ValidationRequested validationRequested) {
             //TODO: replace payAndTransformToOrderResult by a ValidationRequested event
             var pendingTransaction = PayAndTransformToOrderResult.pending(
                     transaction.id(),
@@ -37,7 +41,7 @@ public class PayAndTransformToOrderCommandHandler implements CommandHandler<PayA
             return null;
         }
 
-        if (!transaction.hasSucceeded()) {
+        if (response.first() instanceof TransactionFailed transactionFailed) {
             //TODO: replace payAndTransformToOrderResult by a TransactionFailed event
             //TODO: then remove the PayAndTransformToOrderResult record
             var failedTransaction = PayAndTransformToOrderResult.failed(
@@ -46,12 +50,10 @@ public class PayAndTransformToOrderCommandHandler implements CommandHandler<PayA
             return null;
         }
 
-        LOGGER.info("Transaction for cart id {} succeeded, with transaction id:{}", command.cartId(), transaction.id());
+        String transactionId = response.firstAs(PaymentSucceeded.class).transactionId();
+        LOGGER.info("Transaction for cart id {} succeeded, with transaction id:{}", command.cartId(), transactionId);
 
-        //TODO: return the result of the transformation to order
-        var response = transformToOrderCommandHandler.handle(new TransformToOrderCommand(transaction.id(), command.cartId(), command.amount()));
-
-        return null;
+        return transformToOrderCommandHandler.handle(new TransformToOrderCommand(transactionId, command.cartId(), command.amount()));
     }
 
     @Override
