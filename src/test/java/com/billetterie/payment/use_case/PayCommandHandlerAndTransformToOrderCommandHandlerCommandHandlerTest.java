@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class PayAndTransformToOrderCommandHandlerCommandHandlerTest {
+class PayCommandHandlerAndTransformToOrderCommandHandlerCommandHandlerTest {
 
     private static final String CART_ID = "123456";
     private static final String ORDER_ID = "654654";
@@ -45,7 +45,7 @@ class PayAndTransformToOrderCommandHandlerCommandHandlerTest {
 
     @Spy
     @InjectMocks
-    private Pay pay;
+    private PayCommandHandler payCommandHandler;
 
     @Spy
     @InjectMocks
@@ -60,7 +60,7 @@ class PayAndTransformToOrderCommandHandlerCommandHandlerTest {
         payAndTransformToOrderCommandHandler = new PayAndTransformToOrderCommandHandler(
                 bank,
                 new TransformToOrderCommandHandler(orders, bank, customerSupport, cancelTransactionHandler, alertTransactionFailureHandler),
-                pay);
+                payCommandHandler);
     }
 
     @Test
@@ -85,7 +85,7 @@ class PayAndTransformToOrderCommandHandlerCommandHandlerTest {
                         OrderCreated::amount)
                 .containsExactly(PaymentStatus.SUCCESS, "324234243234", ORDER_ID, "/confirmation/654654?amount=100.0", AMOUNT);
 
-        verify(pay).execute(new PayCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT));
+        verify(payCommandHandler).handle(new PayCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT));
     }
 
     @Test
