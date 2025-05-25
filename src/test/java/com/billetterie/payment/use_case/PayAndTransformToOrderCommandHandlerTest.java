@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class PayAndTransformToOrderTest {
+class PayAndTransformToOrderCommandHandlerTest {
 
     private static final String CART_ID = "123456";
     private static final String ORDER_ID = "654654";
@@ -58,7 +58,7 @@ class PayAndTransformToOrderTest {
     void setUp() {
         payAndTransformToOrder = new PayAndTransformToOrder(
                 bank,
-                new TransformToOrder(orders, bank, customerSupport, cancelTransactionCommandHandler, alertTransactionFailureCommandHandler),
+                new TransformToOrderCommandHandler(orders, bank, customerSupport, cancelTransactionCommandHandler, alertTransactionFailureCommandHandler),
                 pay);
     }
 
@@ -84,7 +84,7 @@ class PayAndTransformToOrderTest {
                             PayAndTransformToOrderResult::orderId,
                             PayAndTransformToOrderResult::redirectUrl,
                             PayAndTransformToOrderResult::amount,
-                            PayAndTransformToOrderResult::cartType)
+                            OrderCreated::cartType)
                     .containsExactly(PaymentStatus.SUCCESS, "324234243234", ORDER_ID, "/confirmation/654654?amount=100.0", AMOUNT, CLASSIC);
             verify(bank).pay(new Payment(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT));
     }
@@ -105,7 +105,7 @@ class PayAndTransformToOrderTest {
                             PayAndTransformToOrderResult::transactionId,
                             PayAndTransformToOrderResult::redirectUrl,
                             PayAndTransformToOrderResult::amount,
-                            PayAndTransformToOrderResult::cartType)
+                            ValidationRequested::cartType)
                     .containsExactly(PaymentStatus.PENDING, TRANSACTION_ID, "/3ds&cartType=classic", AMOUNT, CLASSIC);
         }
 
@@ -201,15 +201,15 @@ class PayAndTransformToOrderTest {
             when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
 
             // when
-            var result = payAndTransformToOrder.execute(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT, RESERVED));
+            var result = payAndTransformToOrderCommandHandler.handle(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT, RESERVED));
 
             // then
-            assertThat(result).extracting(PayAndTransformToOrderResult::status,
-                            PayAndTransformToOrderResult::transactionId,
-                            PayAndTransformToOrderResult::orderId,
-                            PayAndTransformToOrderResult::redirectUrl,
-                            PayAndTransformToOrderResult::amount,
-                            PayAndTransformToOrderResult::cartType)
+            assertThat(result.firstAs(OrderCreated.class)).extracting(OrderCreated::status,
+                            OrderCreated::transactionId,
+                            OrderCreated::orderId,
+                            OrderCreated::redirectUrl,
+                            OrderCreated::amount,
+                            OrderCreated::cartType)
                     .containsExactly(PaymentStatus.SUCCESS, "324234243234", ORDER_ID, "/my-orders?id=654654&amount=100.0", AMOUNT, RESERVED);
         }
 
@@ -222,14 +222,15 @@ class PayAndTransformToOrderTest {
                     .thenReturn(transactionToValidate);
 
             // when
-            var result = payAndTransformToOrder.execute(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT, RESERVED));
+            var result = payAndTransformToOrderCommandHandler.handle(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT, RESERVED));
 
             // then
-            assertThat(result).extracting(PayAndTransformToOrderResult::status,
-                            PayAndTransformToOrderResult::transactionId,
-                            PayAndTransformToOrderResult::redirectUrl,
-                            PayAndTransformToOrderResult::amount,
-                            PayAndTransformToOrderResult::cartType)
+            assertThat(result.firstAs(OrderCreated.class)).extracting(OrderCreated::status,
+                            OrderCreated::transactionId,
+                            OrderCreated::orderId,
+                            OrderCreated::redirectUrl,
+                            OrderCreated::amount,
+                            OrderCreated::cartType)
                     .containsExactly(PaymentStatus.PENDING, TRANSACTION_ID, "/3ds&cartType=reserved", AMOUNT, RESERVED);
         }
 
@@ -242,12 +243,15 @@ class PayAndTransformToOrderTest {
                     .thenReturn(failedTransaction);
 
             // when
-            var result = payAndTransformToOrder.execute(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT, RESERVED));
+            var result = payAndTransformToOrderCommandHandler.handle(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT, RESERVED));
 
             // then
-            assertThat(result).extracting(PayAndTransformToOrderResult::status,
-                            PayAndTransformToOrderResult::transactionId)
-                    .containsExactly(PaymentStatus.FAILED, TRANSACTION_ID);
+            assertThat(result.firstAs(OrderNotCreated.class)).extracting(OrderNotCreated::amount,
+                            OrderNotCreated::transactionId,
+                            OrderNotCreated::redirectUrl)
+                    .containsExactly(AMOUNT,
+                            TRANSACTION_ID,
+                            "/error?cartId=123456&amount=100.0");
         }
 
         @Test
@@ -264,13 +268,13 @@ class PayAndTransformToOrderTest {
             when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(true);
 
             // when
-            var result = payAndTransformToOrder.execute(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT, RESERVED));
+            var result = payAndTransformToOrderCommandHandler.handle(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT, RESERVED));
 
             // then
-            assertThat(result).extracting(PayAndTransformToOrderResult::status,
-                            PayAndTransformToOrderResult::transactionId,
-                            PayAndTransformToOrderResult::redirectUrl)
-                    .containsExactly(PaymentStatus.FAILED,
+            assertThat(result.firstAs(OrderNotCreated.class)).extracting(OrderNotCreated::amount,
+                            OrderNotCreated::transactionId,
+                            OrderNotCreated::redirectUrl)
+                    .containsExactly(AMOUNT,
                             TRANSACTION_ID,
                             "/panier-reserve-error?cartId=123456&amount=100.0");
 
@@ -293,13 +297,13 @@ class PayAndTransformToOrderTest {
             when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(false);
 
             // when
-            var result = payAndTransformToOrder.execute(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT, RESERVED));
+            var result = payAndTransformToOrderCommandHandler.handle(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT, RESERVED));
 
             // then
-            assertThat(result).extracting(PayAndTransformToOrderResult::status,
-                            PayAndTransformToOrderResult::transactionId,
-                            PayAndTransformToOrderResult::redirectUrl)
-                    .containsExactly(PaymentStatus.FAILED,
+            assertThat(result.firstAs(OrderNotCreated.class)).extracting(OrderNotCreated::amount,
+                            OrderNotCreated::transactionId,
+                            OrderNotCreated::redirectUrl)
+                    .containsExactly(AMOUNT,
                             TRANSACTION_ID,
                             "/panier-reserve-error?cartId=123456&amount=100.0");
 
