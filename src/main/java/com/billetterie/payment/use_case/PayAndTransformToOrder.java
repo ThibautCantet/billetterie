@@ -1,5 +1,7 @@
 package com.billetterie.payment.use_case;
 
+import com.billetterie.payment.common.cqrs.command.CommandResponse;
+import com.billetterie.payment.common.cqrs.event.Event;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import com.billetterie.payment.domain.Transaction;
 import org.slf4j.Logger;
@@ -52,6 +54,8 @@ public class PayAndTransformToOrder {
 
         LOGGER.info("Transaction for cart id {} succeeded, with transaction id:{}", command.cartId(), transaction.id());
 
-        return transformToOrder.execute(new TransformToOrderCommand(transaction.id(), command.cartId(), command.amount()));
+        var response = transformToOrder.execute(new TransformToOrderCommand(transaction.id(), command.cartId(), command.amount()));
+
+        return null;
     }
 }
