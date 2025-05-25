@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class PayAndTransformToOrderTest {
+class PayAndTransformToOrderCommandHandlerTest {
 
     private static final String CART_ID = "123456";
     private static final String ORDER_ID = "654654";
@@ -56,7 +56,7 @@ class PayAndTransformToOrderTest {
     void setUp() {
         payAndTransformToOrder = new PayAndTransformToOrder(
                 bank,
-                new TransformToOrder(orders, bank, customerSupport, cancelTransactionHandler, alertTransactionFailureHandler),
+                new TransformToOrderCommandHandler(orders, bank, customerSupport, cancelTransactionHandler, alertTransactionFailureHandler),
                 pay);
     }
 
