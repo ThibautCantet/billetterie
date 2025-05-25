@@ -5,8 +5,9 @@ import com.cantet.thibaut.payment.common.cqrs.command.CommandResponse;
 import com.cantet.thibaut.payment.common.cqrs.event.Event;
 import com.cantet.thibaut.payment.domain.CancelTransactionFailed;
 import com.cantet.thibaut.payment.domain.Order;
+import com.cantet.thibaut.payment.domain.OrderCreated;
+import com.cantet.thibaut.payment.domain.OrderNotCreated;
 import com.cantet.thibaut.payment.domain.Orders;
-import com.cantet.thibaut.payment.domain.PayAndTransformToOrderResult;
 import com.cantet.thibaut.payment.domain.PaymentStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,31 +40,28 @@ public class TransformToOrder implements CommandHandler<TransformToOrderCommand,
                 LOGGER.info("Transaction cancelled: {}", command.transactionId());
             }
 
-            var payAndTransformToOrderResult = new PayAndTransformToOrderResult(
-                    PaymentStatus.FAILED,
+            var orderNotCreated = new OrderNotCreated(
                     command.transactionId(),
+                    command.amount(),
                     getErrorCartUrl(command.cartId(), command.amount()),
-                    null,
-                    null);
-            LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", payAndTransformToOrderResult);
+                    command.cartId());
+            LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", orderNotCreated);
 
-            return null;
+            return new CommandResponse<>(orderNotCreated);
         }
 
         LOGGER.info("Cart transformed to order: {}", order.id());
-        new PayAndTransformToOrderResult(
+        return new CommandResponse<>(new OrderCreated(
                 PaymentStatus.SUCCESS,
                 command.transactionId(),
                 String.format("/confirmation/%s?amount=%s", order.id(), command.amount()),
                 order.id(),
-                command.amount());
-
-        return null;
+                command.amount()));
     }
 
     @Override
     public Class listenTo() {
-        return null;
+        return TransformToOrderCommand.class;
     }
 
     public static String getErrorCartUrl(String cartId, float amount) {
