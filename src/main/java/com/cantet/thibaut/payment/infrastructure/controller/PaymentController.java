@@ -4,9 +4,8 @@ import java.net.URI;
 
 import com.cantet.thibaut.payment.domain.OrderCreated;
 import com.cantet.thibaut.payment.domain.OrderNotCreated;
-import com.cantet.thibaut.payment.domain.PayAndTransformToOrderResult;
-import com.cantet.thibaut.payment.domain.PayAndTransformToOrderResult;
 import com.cantet.thibaut.payment.domain.PaymentStatus;
+import com.cantet.thibaut.payment.domain.ValidationRequested;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentDto;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentResultDto;
 import com.cantet.thibaut.payment.use_case.PayAndTransformToOrder;
@@ -52,7 +51,7 @@ public class PaymentController {
      */
     @PostMapping
     public PaymentResultDto processPayment(@RequestBody PaymentDto paymentDto) {
-        PayAndTransformToOrderResult result = payAndTransformToOrder.execute(
+        var result = payAndTransformToOrder.execute(
                 new PayAndTransformToOrderCommand(
                 paymentDto.cartDto().id(),
                 paymentDto.creditCardDto().number(),
@@ -60,16 +59,24 @@ public class PaymentController {
                 paymentDto.creditCardDto().cypher(),
                 paymentDto.cartDto().amount()));
 
-        if (result.status() == FAILED) {
-            return new PaymentResultDto(result.status());
-        }
-
-        return new PaymentResultDto(
-                result.status(),
-                result.orderId(),
-                result.amount(),
-                result.transactionId(),
-                result.redirectUrl());
+        return switch (result.first()) {
+            case OrderCreated(
+                    PaymentStatus status, String transactionId, String redirectUrl, String orderId, float amount
+            ) -> new PaymentResultDto(
+                    status,
+                    orderId,
+                    amount,
+                    transactionId,
+                    redirectUrl);
+            case ValidationRequested(
+                    PaymentStatus status, String transactionId, String redirectUrl, Float amount
+            ) -> new PaymentResultDto(status,
+                    null,
+                    amount,
+                    transactionId,
+                    redirectUrl);
+            case null, default -> new PaymentResultDto(FAILED);
+        };
     }
 
     @GetMapping("/cart/confirmation")
