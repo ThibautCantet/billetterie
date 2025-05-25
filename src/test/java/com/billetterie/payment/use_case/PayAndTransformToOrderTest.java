@@ -4,11 +4,14 @@ package com.billetterie.payment.use_case;
 import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Order;
+import com.billetterie.payment.domain.OrderCreated;
+import com.billetterie.payment.domain.OrderNotCreated;
 import com.billetterie.payment.domain.Orders;
-import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import com.billetterie.payment.domain.Payment;
 import com.billetterie.payment.domain.PaymentStatus;
 import com.billetterie.payment.domain.Transaction;
+import com.billetterie.payment.domain.TransactionFailed;
+import com.billetterie.payment.domain.ValidationRequested;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -75,11 +78,11 @@ class PayAndTransformToOrderTest {
         var result = payAndTransformToOrder.execute(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT));
 
         // then
-        assertThat(result).extracting(PayAndTransformToOrderResult::status,
-                        PayAndTransformToOrderResult::transactionId,
-                        PayAndTransformToOrderResult::orderId,
-                        PayAndTransformToOrderResult::redirectUrl,
-                        PayAndTransformToOrderResult::amount)
+        assertThat(result.firstAs(OrderCreated.class)).extracting(OrderCreated::status,
+                        OrderCreated::transactionId,
+                        OrderCreated::orderId,
+                        OrderCreated::redirectUrl,
+                        OrderCreated::amount)
                 .containsExactly(PaymentStatus.SUCCESS, "324234243234", ORDER_ID, "/confirmation/654654?amount=100.0", AMOUNT);
 
         verify(pay).execute(new PayCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT));
@@ -97,10 +100,10 @@ class PayAndTransformToOrderTest {
         var result = payAndTransformToOrder.execute(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT));
 
         // then
-        assertThat(result).extracting(PayAndTransformToOrderResult::status,
-                        PayAndTransformToOrderResult::transactionId,
-                        PayAndTransformToOrderResult::redirectUrl,
-                        PayAndTransformToOrderResult::amount)
+        assertThat(result.firstAs(ValidationRequested.class)).extracting(ValidationRequested::status,
+                        ValidationRequested::transactionId,
+                        ValidationRequested::redirectUrl,
+                        ValidationRequested::amount)
                 .containsExactly(PaymentStatus.PENDING, TRANSACTION_ID, "/3ds", AMOUNT);
     }
 
@@ -116,8 +119,8 @@ class PayAndTransformToOrderTest {
         var result = payAndTransformToOrder.execute(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT));
 
         // then
-        assertThat(result).extracting(PayAndTransformToOrderResult::status,
-                        PayAndTransformToOrderResult::transactionId)
+        assertThat(result.firstAs(TransactionFailed.class)).extracting(TransactionFailed::status,
+                        TransactionFailed::id)
                 .containsExactly(PaymentStatus.FAILED, TRANSACTION_ID);
     }
 
@@ -138,10 +141,10 @@ class PayAndTransformToOrderTest {
         var result = payAndTransformToOrder.execute(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT));
 
         // then
-        assertThat(result).extracting(PayAndTransformToOrderResult::status,
-                        PayAndTransformToOrderResult::transactionId,
-                        PayAndTransformToOrderResult::redirectUrl)
-                .containsExactly(PaymentStatus.FAILED,
+        assertThat(result.firstAs(OrderNotCreated.class)).extracting(OrderNotCreated::amount,
+                        OrderNotCreated::transactionId,
+                        OrderNotCreated::redirectUrl)
+                .containsExactly(AMOUNT,
                         TRANSACTION_ID,
                         "/cart?error=true&cartId=123456&amount=100.0");
 
@@ -171,10 +174,10 @@ class PayAndTransformToOrderTest {
         var result = payAndTransformToOrder.execute(new PayAndTransformToOrderCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT));
 
         // then
-        assertThat(result).extracting(PayAndTransformToOrderResult::status,
-                        PayAndTransformToOrderResult::transactionId,
-                        PayAndTransformToOrderResult::redirectUrl)
-                .containsExactly(PaymentStatus.FAILED,
+        assertThat(result.firstAs(OrderNotCreated.class)).extracting(OrderNotCreated::amount,
+                        OrderNotCreated::transactionId,
+                        OrderNotCreated::redirectUrl)
+                .containsExactly(AMOUNT,
                         TRANSACTION_ID,
                         "/cart?error=true&cartId=123456&amount=100.0");
 
