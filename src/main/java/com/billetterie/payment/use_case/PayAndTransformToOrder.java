@@ -5,6 +5,7 @@ import com.billetterie.payment.common.cqrs.command.CommandResponse;
 import com.billetterie.payment.common.cqrs.event.Event;
 import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.PaymentStatus;
+import com.billetterie.payment.domain.PaymentSucceeded;
 import com.billetterie.payment.domain.Transaction;
 import com.billetterie.payment.domain.TransactionFailed;
 import com.billetterie.payment.domain.ValidationRequested;
@@ -27,29 +28,22 @@ public class PayAndTransformToOrder implements CommandHandler<PayAndTransformToO
     }
 
     public CommandResponse<Event> execute(PayAndTransformToOrderCommand command) {
-        Transaction transaction = pay.execute(new PayCommand(command.cartId(), command.cardNumber(), command.expirationDate(), command.cypher(), command.amount()));
+        var response = pay.execute(new PayCommand(command.cartId(), command.cardNumber(), command.expirationDate(), command.cypher(), command.amount()));
 
-        if (transaction.isPending()) {
-            var validationRequested = new ValidationRequested(
-                    PaymentStatus.PENDING,
-                    transaction.id(),
-                    transaction.redirectionUrl(),
-                    command.amount());
+        if (response.first() instanceof ValidationRequested validationRequested) {
             LOGGER.info("Transaction is pending: {}", validationRequested);
             return new CommandResponse<>(validationRequested);
         }
 
-        if (!transaction.hasSucceeded()) {
-            var transactionFailed = new TransactionFailed(
-                    transaction.status(),
-                    transaction.id());
+        if (response.first() instanceof TransactionFailed transactionFailed) {
             LOGGER.info("Transaction failed: {}", transactionFailed);
             return  new CommandResponse<>(transactionFailed);
         }
 
-        LOGGER.info("Transaction for cart id {} succeeded, with transaction id:{}", command.cartId(), transaction.id());
+        String transactionId = response.firstAs(PaymentSucceeded.class).transactionId();
+        LOGGER.info("Transaction for cart id {} succeeded, with transaction id:{}", command.cartId(), transactionId);
 
-        return transformToOrder.execute(new TransformToOrderCommand(transaction.id(), command.cartId(), command.amount()));
+        return transformToOrder.execute(new TransformToOrderCommand(transactionId, command.cartId(), command.amount()));
     }
 
     @Override
