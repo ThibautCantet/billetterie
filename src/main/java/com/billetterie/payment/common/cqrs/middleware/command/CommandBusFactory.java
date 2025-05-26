@@ -7,22 +7,41 @@ import com.billetterie.payment.common.cqrs.event.Event;
 import com.billetterie.payment.common.cqrs.event.EventHandler;
 import com.billetterie.payment.common.cqrs.middleware.event.EventBus;
 import com.billetterie.payment.common.cqrs.middleware.event.EventBusFactory;
+import com.billetterie.payment.domain.Bank;
+import com.billetterie.payment.domain.Orders;
+import com.billetterie.payment.listener.PaymentSucceededListener;
+import com.billetterie.payment.use_case.AlertTransactionFailure;
+import com.billetterie.payment.use_case.CancelTransaction;
+import com.billetterie.payment.use_case.Pay;
+import com.billetterie.payment.use_case.TransformToOrder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class CommandBusFactory {
 
 
-    public CommandBusFactory() {
+    private final Bank bank;
+    private final Orders orders;
+    private final CancelTransaction cancelTransaction;
+    private final AlertTransactionFailure alertTransactionFailure;
+
+    public CommandBusFactory(Bank bank, Orders orders, CancelTransaction cancelTransaction, AlertTransactionFailure alertTransactionFailure) {
+        this.bank = bank;
+        this.orders = orders;
+        this.cancelTransaction = cancelTransaction;
+        this.alertTransactionFailure = alertTransactionFailure;
     }
 
     protected List<CommandHandler> getCommandHandlers() {
         return List.of(
+                new Pay(bank),
+                new TransformToOrder(orders, cancelTransaction, alertTransactionFailure)
         );
     }
 
     protected List<EventHandler<? extends Event>> getEventHandlers() {
         return List.of(
+                new PaymentSucceededListener()
         );
     }
 
