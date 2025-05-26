@@ -59,7 +59,6 @@ public class TransformToOrderTest {
             var order = new Order(null, 0f);
             when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
 
-
             // when
             var result = transformToOrder.execute(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT));
 
