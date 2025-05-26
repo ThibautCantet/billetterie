@@ -3,6 +3,7 @@ package com.billetterie.payment.listener;
 import com.billetterie.payment.common.cqrs.command.Command;
 import com.billetterie.payment.common.cqrs.event.EventHandlerCommand;
 import com.billetterie.payment.domain.PaymentSucceeded;
+import com.billetterie.payment.use_case.TransformToOrderCommand;
 
 public class PaymentSucceededListener extends EventHandlerCommand<PaymentSucceeded> {
 
@@ -11,11 +12,11 @@ public class PaymentSucceededListener extends EventHandlerCommand<PaymentSucceed
 
     @Override
     public Command execute(PaymentSucceeded event) {
-        return null;
+        return new TransformToOrderCommand(event.transactionId(), event.cartId(), event.amount());
     }
 
     @Override
     public Class<PaymentSucceeded> listenTo() {
-        return null;
+        return PaymentSucceeded.class;
     }
 }
