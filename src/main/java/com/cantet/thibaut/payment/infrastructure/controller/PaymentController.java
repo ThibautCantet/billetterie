@@ -11,7 +11,6 @@ import com.cantet.thibaut.payment.domain.ValidationRequested;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentDto;
 import com.cantet.thibaut.payment.infrastructure.controller.dto.PaymentResultDto;
 import com.cantet.thibaut.payment.use_case.PayCommand;
-import com.cantet.thibaut.payment.use_case.TransformToOrder;
 import com.cantet.thibaut.payment.use_case.TransformToOrderCommand;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -36,11 +35,9 @@ public class PaymentController extends CommandController {
     private static final Logger LOGGER = LoggerFactory.getLogger(PaymentController.class);
 
     public static final String PATH = "/api/payment";
-    private final TransformToOrder transformToOrder;
 
-    public PaymentController(CommandBusFactory commandBusFactory, TransformToOrder transformToOrder) {
+    public PaymentController(CommandBusFactory commandBusFactory) {
         super(commandBusFactory);
-        this.transformToOrder = transformToOrder;
     }
 
     /**
@@ -90,7 +87,7 @@ public class PaymentController extends CommandController {
         if (status.equals("ko")) {
             response = redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
         } else {
-            var result = transformToOrder.execute(new TransformToOrderCommand(transactionId, cartId, amount));
+            var result = getCommandBus().dispatch(new TransformToOrderCommand(transactionId, cartId, amount));
 
             if (result.first() instanceof OrderNotCreated orderNotCreated) {
                 response = redirectToCartOnError(amount, orderNotCreated.redirectUrl(), headers);
