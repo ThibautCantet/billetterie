@@ -3,7 +3,6 @@ package com.cantet.thibaut.payment.use_case;
 import com.cantet.thibaut.payment.common.cqrs.command.CommandHandler;
 import com.cantet.thibaut.payment.common.cqrs.command.CommandResponse;
 import com.cantet.thibaut.payment.common.cqrs.event.Event;
-import com.cantet.thibaut.payment.domain.CancelTransactionFailed;
 import com.cantet.thibaut.payment.domain.Order;
 import com.cantet.thibaut.payment.domain.OrderCreated;
 import com.cantet.thibaut.payment.domain.OrderNotCreated;
@@ -25,6 +24,19 @@ public class TransformToOrder implements CommandHandler<TransformToOrderCommand,
 
     public CommandResponse<Event> execute(TransformToOrderCommand command) {
         Order order = orders.transformToOrder(command.cartId(), command.amount());
+
+        if (order.isNotCompleted()) {
+            LOGGER.warn("Cart not transformed to order: {}", command.cartId());
+
+            var orderNotCreated = new OrderNotCreated(
+                    command.transactionId(),
+                    command.amount(),
+                    getErrorCartUrl(command.cartId(), command.amount()),
+                    command.cartId());
+            LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", orderNotCreated);
+
+            return new CommandResponse<>(orderNotCreated);
+        }
 
         LOGGER.info("Cart transformed to order: {}", order.id());
         return new CommandResponse<>(new OrderCreated(
