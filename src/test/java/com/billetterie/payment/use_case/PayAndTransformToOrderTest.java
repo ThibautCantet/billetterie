@@ -46,9 +46,15 @@ class PayAndTransformToOrderTest {
     @InjectMocks
     private Pay pay;
 
+    @Spy
+    @InjectMocks
+    private CancelTransaction cancelTransaction;
+
     @BeforeEach
     void setUp() {
-        payAndTransformToOrder = new PayAndTransformToOrder(bank, new TransformToOrder(orders, bank, customerSupport),
+        payAndTransformToOrder = new PayAndTransformToOrder(
+                bank,
+                new TransformToOrder(orders, bank, customerSupport, cancelTransaction),
                 pay);
     }
 
@@ -140,7 +146,9 @@ class PayAndTransformToOrderTest {
                             TRANSACTION_ID,
                             "/cart?error=true&cartId=123456&amount=100.0");
 
-            verify(bank).cancel(TRANSACTION_ID, AMOUNT);
+            verify(cancelTransaction).execute(new CancelTransactionCommand(TRANSACTION_ID, AMOUNT));
+
+        verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
             verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
         }
