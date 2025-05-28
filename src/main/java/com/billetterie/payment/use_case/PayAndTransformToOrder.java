@@ -16,10 +16,12 @@ public class PayAndTransformToOrder {
 
     private final Bank bank;
     private final TransformToOrder transformToOrder;
+    private final Pay pay;
 
-    public PayAndTransformToOrder(Bank bank, TransformToOrder transformToOrder) {
+    public PayAndTransformToOrder(Bank bank, TransformToOrder transformToOrder, Pay pay) {
         this.bank = bank;
         this.transformToOrder = transformToOrder;
+        this.pay = pay;
     }
 
     public PayAndTransformToOrderResult execute(PayAndTransformToOrderCommand command) {
