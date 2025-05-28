@@ -12,7 +12,9 @@ import com.billetterie.payment.domain.Transaction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.*;
@@ -38,9 +40,14 @@ class PayAndTransformToOrderTest {
     @Mock
     private CustomerSupport customerSupport;
 
+    @Spy
+    @InjectMocks
+    private Pay pay;
+
     @BeforeEach
     void setUp() {
-        payAndTransformToOrder = new PayAndTransformToOrder(bank, new TransformToOrder(orders, bank, customerSupport));
+        payAndTransformToOrder = new PayAndTransformToOrder(bank, new TransformToOrder(orders, bank, customerSupport),
+                pay);
     }
 
     @Test
@@ -64,6 +71,8 @@ class PayAndTransformToOrderTest {
                         PayAndTransformToOrderResult::redirectUrl,
                         PayAndTransformToOrderResult::amount)
                 .containsExactly(PaymentStatus.SUCCESS, "324234243234", ORDER_ID, "/confirmation/654654?amount=100.0", AMOUNT);
+
+        verify(pay).execute(new PayCommand(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT));
     }
 
     @Test
