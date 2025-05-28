@@ -36,7 +36,7 @@ public class TransformToOrderTest {
 
     @BeforeEach
     void setUp() {
-        transformToOrder = new TransformToOrder(orders, bank, customerSupport, new CancelTransaction(bank));
+        transformToOrder = new TransformToOrder(orders, customerSupport, new CancelTransaction(bank));
     }
 
     @Test
