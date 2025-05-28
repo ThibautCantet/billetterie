@@ -39,10 +39,13 @@ public class TransformToOrderTest {
     @Spy
     @InjectMocks
     private CancelTransaction cancelTransaction;
+    @Spy
+    @InjectMocks
+    private AlertTransactionFailure alertTransactionFailure;
 
     @BeforeEach
     void setUp() {
-        transformToOrder = new TransformToOrder(orders, bank, customerSupport, cancelTransaction);
+        transformToOrder = new TransformToOrder(orders, bank, customerSupport, cancelTransaction, alertTransactionFailure);
     }
 
     @Nested
@@ -88,7 +91,7 @@ public class TransformToOrderTest {
 
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
-            verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
+            verify(alertTransactionFailure, never()).execute(any());verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
         }
 
         @Test
