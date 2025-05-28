@@ -1,8 +1,6 @@
 package com.billetterie.payment.use_case;
 
-import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
-import com.billetterie.payment.domain.Payment;
 import com.billetterie.payment.domain.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,18 +12,21 @@ import static com.billetterie.payment.domain.PaymentStatus.*;
 public class PayAndTransformToOrder {
     private static final Logger LOGGER = LoggerFactory.getLogger(PayAndTransformToOrder.class);
 
-    private final Bank bank;
     private final TransformToOrder transformToOrder;
     private final Pay pay;
 
-    public PayAndTransformToOrder(Bank bank, TransformToOrder transformToOrder, Pay pay) {
-        this.bank = bank;
+    public PayAndTransformToOrder(TransformToOrder transformToOrder, Pay pay) {
         this.transformToOrder = transformToOrder;
         this.pay = pay;
     }
 
     public PayAndTransformToOrderResult execute(PayAndTransformToOrderCommand command) {
-        Transaction transaction = bank.pay(new Payment(command.cardNumber(), command.expirationDate(), command.cypher(), command.cartId(), command.amount()));
+        var transaction = pay.execute(new PayCommand(
+                command.cardNumber(),
+                command.expirationDate(),
+                command.cypher(),
+                command.cartId(),
+                command.amount()));
 
         if (transaction.isPending()) {
             var pendingTransaction = new PayAndTransformToOrderResult(
