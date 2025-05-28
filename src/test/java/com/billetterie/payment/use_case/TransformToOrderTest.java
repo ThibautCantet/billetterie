@@ -37,10 +37,13 @@ public class TransformToOrderTest {
     @Spy
     @InjectMocks
     private CancelTransaction cancelTransaction;
+    @Spy
+    @InjectMocks
+    private AlertTransactionFailure alertTransactionFailure;
 
     @BeforeEach
     void setUp() {
-        transformToOrder = new TransformToOrder(orders, bank, customerSupport, cancelTransaction);
+        transformToOrder = new TransformToOrder(orders, bank, customerSupport, cancelTransaction, alertTransactionFailure);
     }
 
     @Test
@@ -84,6 +87,8 @@ public class TransformToOrderTest {
 
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
+        verify(alertTransactionFailure, never()).execute(any());
+
         verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
     }
 
@@ -107,6 +112,8 @@ public class TransformToOrderTest {
                         "/cart?error=true&cartId=123456&amount=100.0");
 
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
+
+        verify(alertTransactionFailure).execute(new AlertTransactionFailureCommand(TRANSACTION_ID, CART_ID, AMOUNT));
 
         verify(customerSupport).alertTransactionFailure(TRANSACTION_ID, CART_ID, AMOUNT);
     }
