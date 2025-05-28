@@ -13,7 +13,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static com.billetterie.payment.domain.CartType.*;
@@ -40,9 +42,14 @@ class PayAndTransformToOrderTest {
     @Mock
     private CustomerSupport customerSupport;
 
+    @Spy
+    @InjectMocks
+    private Pay pay;
+
     @BeforeEach
     void setUp() {
-        payAndTransformToOrder = new PayAndTransformToOrder(bank, new TransformToOrder(orders, bank, customerSupport));
+        payAndTransformToOrder = new PayAndTransformToOrder(bank, new TransformToOrder(orders, bank, customerSupport),
+                pay);
     }
 
     @Nested
@@ -69,7 +76,8 @@ class PayAndTransformToOrderTest {
                             PayAndTransformToOrderResult::amount,
                             PayAndTransformToOrderResult::cartType)
                     .containsExactly(PaymentStatus.SUCCESS, "324234243234", ORDER_ID, "/confirmation/654654?amount=100.0", AMOUNT, CLASSIC);
-        }
+            verify(bank).pay(new Payment(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT));
+    }
 
         @Test
         public void should_return_ok_with_redirection_when_payment_requires_3DS() {
