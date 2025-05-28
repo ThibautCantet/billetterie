@@ -16,11 +16,13 @@ public class TransformToOrder {
     private final Orders orders;
     private final Bank bank;
     private final CustomerSupport customerSupport;
+    private final CancelTransaction cancelTransaction;
 
-    public TransformToOrder(Orders orders, Bank bank, CustomerSupport customerSupport) {
+    public TransformToOrder(Orders orders, Bank bank, CustomerSupport customerSupport, CancelTransaction cancelTransaction) {
         this.orders = orders;
         this.bank = bank;
         this.customerSupport = customerSupport;
+        this.cancelTransaction = cancelTransaction;
     }
 
     public PayAndTransformToOrderResult execute(TransformToOrderCommand command) {
@@ -28,6 +30,7 @@ public class TransformToOrder {
 
         if (order.isNotCompleted()) {
             LOGGER.warn("Cart not transformed to order: {}", command.cartId());
+            //TODO : replace with CancelTransaction use case
             boolean cancel = bank.cancel(command.transactionId(), command.amount());
             if (!cancel) {
                 LOGGER.error("Transaction cancellation failed: {}", command.transactionId());
