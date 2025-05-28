@@ -40,7 +40,8 @@ class PayAndTransformToOrderTest {
 
     @BeforeEach
     void setUp() {
-        payAndTransformToOrder = new PayAndTransformToOrder(bank, new TransformToOrder(orders, bank, customerSupport));
+        payAndTransformToOrder = new PayAndTransformToOrder(bank, new TransformToOrder(orders, bank, customerSupport),
+                new Pay(bank));
     }
 
     @Test
