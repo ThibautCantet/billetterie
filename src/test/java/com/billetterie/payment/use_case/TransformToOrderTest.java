@@ -5,11 +5,13 @@ import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Order;
 import com.billetterie.payment.domain.Orders;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static com.billetterie.payment.domain.CartType.*;
@@ -25,7 +27,6 @@ public class TransformToOrderTest {
     private static final float AMOUNT = 100.0f;
     private static final String TRANSACTION_ID = "324234243234";
 
-    @InjectMocks
     private TransformToOrder transformToOrder;
 
     @Mock
@@ -35,6 +36,14 @@ public class TransformToOrderTest {
     private Bank bank;
     @Mock
     private CustomerSupport customerSupport;
+    @Spy
+    @InjectMocks
+    private CancelTransaction cancelTransaction;
+
+    @BeforeEach
+    void setUp() {
+        transformToOrder = new TransformToOrder(orders, bank, customerSupport, cancelTransaction);
+    }
 
     @Nested
     class PanierClassique {
@@ -75,7 +84,9 @@ public class TransformToOrderTest {
                             TRANSACTION_ID,
                             "/cart?error=true&cartId=123456&amount=100.0");
 
-            verify(bank).cancel(TRANSACTION_ID, AMOUNT);
+            verify(cancelTransaction).execute(new CancelTransactionCommand(TRANSACTION_ID, AMOUNT));
+
+        verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
             verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
         }
