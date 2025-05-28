@@ -18,12 +18,14 @@ public class TransformToOrder {
     private final Bank bank;
     private final CustomerSupport customerSupport;
     private final CancelTransaction cancelTransaction;
+    private final AlertTransactionFailure alertTransactionFailure;
 
-    public TransformToOrder(Orders orders, Bank bank, CustomerSupport customerSupport, CancelTransaction cancelTransaction) {
+    public TransformToOrder(Orders orders, Bank bank, CustomerSupport customerSupport, CancelTransaction cancelTransaction, AlertTransactionFailure alertTransactionFailure) {
         this.orders = orders;
         this.bank = bank;
         this.customerSupport = customerSupport;
         this.cancelTransaction = cancelTransaction;
+        this.alertTransactionFailure = alertTransactionFailure;
     }
 
     public PayAndTransformToOrderResult execute(TransformToOrderCommand command) {
