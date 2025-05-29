@@ -36,7 +36,7 @@ public class TransformToOrder {
             boolean cancel = cancelTransaction.execute(new CancelTransactionCommand(command.transactionId(), command.amount()));
             if (!cancel) {
                 LOGGER.error("Transaction cancellation failed: {}", command.transactionId());
-                customerSupport.alertTransactionFailure(command.transactionId(), command.cartId(), command.amount());
+                alertTransactionFailure.execute(new AlertTransactionFailureCommand(command.transactionId(), command.cartId(), command.amount()));
             } else {
                 LOGGER.info("Transaction cancelled: {}", command.transactionId());
             }
