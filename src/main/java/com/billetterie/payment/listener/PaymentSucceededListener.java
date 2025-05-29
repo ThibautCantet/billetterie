@@ -12,7 +12,6 @@ public class PaymentSucceededListener extends EventHandlerCommand<PaymentSucceed
 
     @Override
     public Command handle(PaymentSucceeded event) {
-        //TODO: then implement CommandBusFactory and PaymentController
         return new TransformToOrderCommand(event.transactionId(), event.cartId(), event.amount());
     }
 
