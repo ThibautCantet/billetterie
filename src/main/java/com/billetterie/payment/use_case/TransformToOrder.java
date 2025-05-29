@@ -7,6 +7,8 @@ import com.billetterie.payment.domain.CancelTransactionFailed;
 import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Order;
+import com.billetterie.payment.domain.OrderCreated;
+import com.billetterie.payment.domain.OrderNotCreated;
 import com.billetterie.payment.domain.Orders;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import com.billetterie.payment.domain.PaymentStatus;
@@ -45,27 +47,28 @@ public class TransformToOrder implements CommandHandler<TransformToOrderCommand,
                 LOGGER.info("Transaction cancelled: {}", command.transactionId());
             }
 
-            var payAndTransformToOrderResult = PayAndTransformToOrderResult.failed(
-                    PaymentStatus.FAILED,
+            var orderNotCreated = new OrderNotCreated(
                     command.transactionId(),
-                    getErrorCartUrl(command.cartId(), command.amount()));
-            LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", payAndTransformToOrderResult);
+                    command.amount(),
+                    getErrorCartUrl(command.cartId(), command.amount()),
+                    command.cartId());
+            LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", orderNotCreated);
 
-            return null;
+            return new CommandResponse<>(orderNotCreated);
         }
 
         LOGGER.info("Cart transformed to order: {}", order.id());
-        PayAndTransformToOrderResult.succeeded(
+        var orderCreated = OrderCreated.of(
                 command.transactionId(),
                 order.id(),
                 command.amount());
 
-        return null;
+        return new CommandResponse<>(orderCreated);
     }
 
     @Override
     public Class listenTo() {
-        return null;
+        return TransformToOrderCommand.class;
     }
 
     public static String getErrorCartUrl(String cartId, float amount) {
