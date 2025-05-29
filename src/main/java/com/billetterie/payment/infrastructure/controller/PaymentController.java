@@ -108,6 +108,7 @@ public class PaymentController {
             }
             response = redirectToCartOnError(amount, url, headers);
         } else {
+            //TODO: dispatch TransformToOrderCommand
             var result = transformToOrderCommandHandler.handle(new TransformToOrderCommand(transactionId, cartId, amount, type));
 
             if (result.first() instanceof OrderNotCreated orderNotCreated) {
