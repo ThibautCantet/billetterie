@@ -10,7 +10,6 @@ import com.billetterie.payment.common.cqrs.middleware.event.EventBusFactory;
 import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Orders;
-import com.billetterie.payment.infrastructure.service.EmailCustomerSupport;
 import com.billetterie.payment.listener.PaymentSucceededListener;
 import com.billetterie.payment.use_case.AlertTransactionFailure;
 import com.billetterie.payment.use_case.CancelTransaction;
