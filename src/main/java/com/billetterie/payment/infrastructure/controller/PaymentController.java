@@ -12,7 +12,6 @@ import com.billetterie.payment.infrastructure.controller.dto.PaymentDto;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentResultDto;
 import com.billetterie.payment.use_case.PayCommand;
 import com.billetterie.payment.use_case.TransformToOrderCommand;
-import com.billetterie.payment.use_case.TransformToOrderCommandHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,11 +35,9 @@ public class PaymentController extends CommandController {
     private static final Logger LOGGER = LoggerFactory.getLogger(PaymentController.class);
 
     public static final String PATH = "/api/payment";
-    private final TransformToOrderCommandHandler transformToOrderCommandHandler;
 
-    public PaymentController(CommandBusFactory commandBusFactory, TransformToOrderCommandHandler transformToOrderCommandHandler) {
+    public PaymentController(CommandBusFactory commandBusFactory) {
         super(commandBusFactory);
-        this.transformToOrderCommandHandler = transformToOrderCommandHandler;
     }
 
     /**
@@ -90,8 +87,7 @@ public class PaymentController extends CommandController {
         if (status.equals("ko")) {
             response = redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
         } else {
-            //TODO: dispatch TransformToOrderCommand
-            var result = transformToOrderCommandHandler.handle(new TransformToOrderCommand(transactionId, cartId, amount));
+            var result = getCommandBus().dispatch(new TransformToOrderCommand(transactionId, cartId, amount));
 
             if (result.first() instanceof OrderNotCreated orderNotCreated) {
                 response = redirectToCartOnError(amount, orderNotCreated.redirectUrl(), headers);
