@@ -9,12 +9,11 @@ public class CancelTransactionFailedListener extends EventHandlerCommand<CancelT
 
     @Override
     public Command execute(CancelTransactionFailed event) {
-        //TODO: return a CancelTransactionFailedCommand
-        return null;
+        return new AlertTransactionFailureCommand(event.transactionId(), event.cartId(), event.amount());
     }
 
     @Override
     public Class<CancelTransactionFailed> listenTo() {
-        return null;
+        return CancelTransactionFailed.class;
     }
 }
