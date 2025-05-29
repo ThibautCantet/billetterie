@@ -21,7 +21,7 @@ public class PayAndTransformToOrder {
     }
 
     public PayAndTransformToOrderResult execute(String cartId, String cardNumber, String expirationDate, String cypher, float amount, String email) {
-        Transaction transaction = bank.pay(new Payment(cardNumber, expirationDate, cypher, cartId, amount, email));
+        Transaction transaction = bank.pay(new Payment(cartId, cardNumber, expirationDate, cypher, amount, email));
 
         if (transaction.isPending()) {
             var pendingTransaction = PayAndTransformToOrderResult.pending(
