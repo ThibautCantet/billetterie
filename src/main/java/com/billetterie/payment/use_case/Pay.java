@@ -22,13 +22,26 @@ public class Pay implements CommandHandler<PayCommand, CommandResponse<Event>> {
     public CommandResponse<Event> execute(PayCommand command) {
         Payment payment = new Payment(command.cartId(), command.cardNumber(), command.expirationDate(), command.cypher(), command.amount());
         var transaction = bank.pay(payment);
-        //TODO: switch on transaction status and return appropriate event
-        return null;
+        if (transaction.isPending()) {
+            return new CommandResponse<>(new ValidationRequested(
+                    PaymentStatus.PENDING,
+                    transaction.id(),
+                    transaction.redirectionUrl(),
+                    command.amount()));
+        } else if (!transaction.hasSucceeded()) {
+            return new CommandResponse<>(new TransactionFailed(PaymentStatus.FAILED, transaction.id()));
+        } else {
+            return new CommandResponse<>(new PaymentSucceeded(
+                    PaymentStatus.SUCCESS,
+                    transaction.id(),
+                    command.cartId(),
+                    command.amount()));
+        }
     }
 
     @Override
     public Class listenTo() {
-        return null;
+        return PayCommand.class;
     }
 
 
