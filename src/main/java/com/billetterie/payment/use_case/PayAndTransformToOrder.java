@@ -40,7 +40,6 @@ public class PayAndTransformToOrder implements CommandHandler<PayAndTransformToO
         }
 
         if (!transaction.hasSucceeded()) {
-            //TODO: then remove the PayAndTransformToOrderResult record
             var transactionFailed = new TransactionFailed(
                     transaction.status(),
                     transaction.id());
