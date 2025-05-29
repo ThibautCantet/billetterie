@@ -10,6 +10,8 @@ import com.billetterie.payment.common.cqrs.middleware.event.EventBusFactory;
 import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Orders;
+import com.billetterie.payment.listener.CancelTransactionFailedListener;
+import com.billetterie.payment.listener.OrderNotCreatedListener;
 import com.billetterie.payment.listener.PaymentSucceededListener;
 import com.billetterie.payment.use_case.AlertTransactionFailure;
 import com.billetterie.payment.use_case.CancelTransaction;
@@ -31,19 +33,19 @@ public class CommandBusFactory {
     }
 
     protected List<CommandHandler> getCommandHandlers() {
-        //TODO: register CancelTransaction, AlertTransactionFailure handlers
         return List.of(
                 new Pay(bank),
-                new TransformToOrder(orders, bank, customerSupport,
-                        new CancelTransaction(bank),
-                        new AlertTransactionFailure(customerSupport))
+                new TransformToOrder(orders),
+                new CancelTransaction(bank),
+                new AlertTransactionFailure(customerSupport)
         );
     }
 
     protected List<EventHandler<? extends Event>> getEventHandlers() {
-        //TODO: register OrderNotCreatedListener and CancelTransactionFailedListener listeners
         return List.of(
-                new PaymentSucceededListener()
+                new PaymentSucceededListener(),
+                new OrderNotCreatedListener(),
+                new CancelTransactionFailedListener()
         );
     }
 
