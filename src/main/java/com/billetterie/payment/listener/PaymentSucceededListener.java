@@ -12,9 +12,7 @@ public class PaymentSucceededListener extends EventHandlerCommand<PaymentSucceed
 
     @Override
     public Command execute(PaymentSucceeded event) {
-        //TODO: return a TransformToOrderCommand
-        //TODO: then implement CommandBusFactory and
-        return null;
+        return new TransformToOrderCommand(event.transactionId(), event.cartId(), event.amount());
     }
 
     @Override
