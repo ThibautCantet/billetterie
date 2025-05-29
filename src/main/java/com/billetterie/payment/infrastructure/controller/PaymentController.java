@@ -90,6 +90,7 @@ public class PaymentController extends CommandController {
         if (status.equals("ko")) {
             response = redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
         } else {
+            //TODO: dispatch TransformToOrderCommand
             var result = transformToOrder.execute(new TransformToOrderCommand(transactionId, cartId, amount));
 
             if (result.first() instanceof OrderNotCreated orderNotCreated) {
