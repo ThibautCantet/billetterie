@@ -69,12 +69,10 @@ public class TransformToOrderCommandHandlerTest {
         }
 
         @Test
-        void should_return_OrderNotCreated_and_cancel_transaction_when_transform_to_order_fails() {
+        void should_return_OrderNotCreated_when_transform_to_order_fails() {
             // given
             var order = new Order(null, 0f);
             when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
-
-            when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(true);
 
             // when
             var result = transformToOrderCommandHandler.handle(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT));
@@ -87,39 +85,11 @@ public class TransformToOrderCommandHandlerTest {
                             TRANSACTION_ID,
                             "/cart?error=true&cartId=123456&amount=100.0");
 
-            verify(cancelTransactionCommandHandler).handle(new CancelTransactionCommand(TRANSACTION_ID, CART_ID, AMOUNT));
-
-            verify(bank).cancel(TRANSACTION_ID, AMOUNT);
+            verify(bank, never()).cancel(any(), any());
 
             verify(alertTransactionFailureCommandHandler, never()).handle(any());
 
             verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
-        }
-
-        @Test
-        void should_return_OrderNotCreated_and_alert_when_transform_to_order_fails_and_cancel_transaction_fails() {
-            // given
-            var order = new Order(null, 0f);
-            when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
-
-            when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(false);
-
-            // when
-            var result = transformToOrderCommandHandler.handle(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT));
-
-            // then
-            assertThat(result.firstAs(OrderNotCreated.class)).extracting(OrderNotCreated::amount,
-                            OrderNotCreated::transactionId,
-                            OrderNotCreated::redirectUrl)
-                    .containsExactly(AMOUNT,
-                            TRANSACTION_ID,
-                            "/cart?error=true&cartId=123456&amount=100.0");
-
-            verify(bank).cancel(TRANSACTION_ID, AMOUNT);
-
-            verify(alertTransactionFailureCommandHandler).handle(new AlertTransactionFailureCommand(TRANSACTION_ID, CART_ID, AMOUNT));
-
-            verify(customerSupport).alertTransactionFailure(TRANSACTION_ID, CART_ID, AMOUNT);
         }
     }
 

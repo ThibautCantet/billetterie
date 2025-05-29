@@ -94,6 +94,7 @@ public class PaymentController {
         if (status.equals("ko")) {
             response = redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
         } else {
+            //TODO: dispatch TransformToOrderCommand
             var result = transformToOrderCommandHandler.handle(new TransformToOrderCommand(transactionId, cartId, amount));
 
             if (result.first() instanceof OrderNotCreated orderNotCreated) {
