@@ -1,7 +1,5 @@
 package com.billetterie.payment.use_case;
 
-import java.util.List;
-
 import com.billetterie.payment.common.cqrs.command.CommandHandler;
 import com.billetterie.payment.common.cqrs.command.CommandResponse;
 import com.billetterie.payment.common.cqrs.event.Event;
