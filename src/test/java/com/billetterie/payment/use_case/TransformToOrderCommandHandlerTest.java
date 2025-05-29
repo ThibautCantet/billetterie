@@ -1,7 +1,5 @@
 package com.billetterie.payment.use_case;
 
-import com.billetterie.payment.domain.Bank;
-import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Order;
 import com.billetterie.payment.domain.OrderCreated;
 import com.billetterie.payment.domain.OrderNotCreated;
@@ -10,9 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static com.billetterie.payment.domain.PaymentStatus.*;
@@ -32,20 +28,9 @@ public class TransformToOrderCommandHandlerTest {
     @Mock
     private Orders orders;
 
-    @Mock
-    private Bank bank;
-    @Mock
-    private CustomerSupport customerSupport;
-    @Spy
-    @InjectMocks
-    private CancelTransactionCommandHandler cancelTransactionCommandHandler;
-    @Spy
-    @InjectMocks
-    private AlertTransactionFailureHandler alertTransactionFailureHandler;
-
     @BeforeEach
     void setUp() {
-        transformToOrderCommandHandler = new TransformToOrderCommandHandler(orders, bank, customerSupport, cancelTransactionCommandHandler, alertTransactionFailureHandler);
+        transformToOrderCommandHandler = new TransformToOrderCommandHandler(orders);
     }
 
     @Nested
@@ -84,12 +69,6 @@ public class TransformToOrderCommandHandlerTest {
                     .containsExactly(AMOUNT,
                             TRANSACTION_ID,
                             "/cart?error=true&cartId=123456&amount=100.0");
-
-            verify(bank, never()).cancel(any(), any());
-
-            verify(alertTransactionFailureHandler, never()).handle(any());
-
-            verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
         }
     }
 
