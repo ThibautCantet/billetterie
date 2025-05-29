@@ -3,13 +3,13 @@ package com.billetterie.payment.use_case;
 import com.billetterie.payment.common.cqrs.command.CommandHandler;
 import com.billetterie.payment.common.cqrs.command.CommandResponse;
 import com.billetterie.payment.common.cqrs.event.Event;
-import com.billetterie.payment.domain.CancelTransactionFailed;
 import com.billetterie.payment.domain.Bank;
+import com.billetterie.payment.domain.CancelTransactionFailed;
 import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Order;
+import com.billetterie.payment.domain.OrderCreated;
+import com.billetterie.payment.domain.OrderNotCreated;
 import com.billetterie.payment.domain.Orders;
-import com.billetterie.payment.domain.PayAndTransformToOrderResult;
-import com.billetterie.payment.domain.PaymentStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -45,30 +45,28 @@ public class TransformToOrderCommandHandler implements CommandHandler<TransformT
                 LOGGER.info("Transaction cancelled: {}", command.transactionId());
             }
 
-            //TODO: replace payAndTransformToOrderResult by a OrderNotCreated event
-            var payAndTransformToOrderResult = PayAndTransformToOrderResult.failed(
-                    PaymentStatus.FAILED,
+            var orderNotCreated = new OrderNotCreated(
                     command.transactionId(),
-                    getErrorCartUrl(command.cartId(), command.amount()));
-            LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", payAndTransformToOrderResult);
+                    command.amount(),
+                    getErrorCartUrl(command.cartId(), command.amount()),
+                    command.cartId());
+            LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", orderNotCreated);
 
-            return null;
+            return new CommandResponse<>(orderNotCreated);
         }
 
         LOGGER.info("Cart transformed to order: {}", order.id());
-        //TODO: replace payAndTransformToOrderResult by a OrderCreated event
-        //TODO: use OrderCreated.of
-        PayAndTransformToOrderResult.succeeded(
+        var orderCreated = OrderCreated.of(
                 command.transactionId(),
                 order.id(),
                 command.amount());
 
-        return null;
+        return new CommandResponse<>(orderCreated);
     }
 
     @Override
     public Class listenTo() {
-        return null;
+        return TransformToOrderCommand.class;
     }
 
     public static String getErrorCartUrl(String cartId, float amount) {
