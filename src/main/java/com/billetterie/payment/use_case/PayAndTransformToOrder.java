@@ -8,8 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import static com.billetterie.payment.domain.PaymentStatus.*;
-
 @Service
 public class PayAndTransformToOrder {
     private static final Logger LOGGER = LoggerFactory.getLogger(PayAndTransformToOrder.class);
@@ -23,7 +21,7 @@ public class PayAndTransformToOrder {
     }
 
     public PayAndTransformToOrderResult execute(PayAndTransformToOrderCommand command) {
-        Transaction transaction = bank.pay(new Payment(command.cardNumber(), command.expirationDate(), command.cypher(), command.cartId(), command.amount()));
+        Transaction transaction = bank.pay(new Payment(command.cartId(), command.cardNumber(), command.expirationDate(), command.cypher(), command.amount()));
 
         if (transaction.isPending()) {
             var pendingTransaction = PayAndTransformToOrderResult.pending(
