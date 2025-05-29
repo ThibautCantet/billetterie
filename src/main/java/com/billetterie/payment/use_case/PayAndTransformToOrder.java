@@ -22,7 +22,7 @@ public class PayAndTransformToOrder {
     }
 
     public PayAndTransformToOrderResult execute(PayAndTransformToOrderCommand command) {
-        Transaction transaction = bank.pay(new Payment(command.cardNumber(), command.expirationDate(), command.cypher(), command.cartId(), command.amount()));
+        Transaction transaction = bank.pay(new Payment(command.cartId(), command.cardNumber(), command.expirationDate(), command.cypher(), command.amount()));
 
         if (transaction.isPending()) {
             var pendingTransaction = PayAndTransformToOrderResult.pending(
