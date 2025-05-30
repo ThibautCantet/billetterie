@@ -12,5 +12,6 @@ public class AlertTransactionFailure {
     }
 
     public void execute(AlertTransactionFailureCommand command) {
+        customerSupport.alertTransactionFailure(command.transactionId(), command.cartId(), command.amount());
     }
 }
