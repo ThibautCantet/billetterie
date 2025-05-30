@@ -59,7 +59,7 @@ class PayAndTransformToOrderCommandHandlerCommandHandlerTest {
     void setUp() {
         payAndTransformToOrderCommandHandler = new PayAndTransformToOrderCommandHandler(
                 bank,
-                new TransformToOrderCommandHandler(orders, bank, customerSupport, cancelTransactionCommandHandler, alertTransactionFailureCommandHandler),
+                new TransformToOrderCommandHandler(orders, cancelTransactionCommandHandler, alertTransactionFailureCommandHandler),
                 pay);
     }
 
