@@ -12,6 +12,6 @@ public class CancelTransaction {
     }
 
     public boolean execute(CancelTransactionCommand  command) {
-        return false;
+        return bank.cancel(command.transactionId(), command.amount());
     }
 }
