@@ -30,8 +30,7 @@ public class TransformToOrder {
 
         if (order.isNotCompleted()) {
             LOGGER.warn("Cart not transformed to order: {}", command.cartId());
-            //TODO : replace with CancelTransaction use case
-            boolean cancel = bank.cancel(command.transactionId(), command.amount());
+            boolean cancel = cancelTransaction.execute(new CancelTransactionCommand(command.transactionId(), command.amount()));
             if (!cancel) {
                 LOGGER.error("Transaction cancellation failed: {}", command.transactionId());
                 customerSupport.alertTransactionFailure(command.transactionId(), command.cartId(), command.amount());
