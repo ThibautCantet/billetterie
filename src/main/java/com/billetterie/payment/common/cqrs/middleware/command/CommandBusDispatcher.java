@@ -25,7 +25,7 @@ public class CommandBusDispatcher implements CommandBus {
     public <R extends CommandResponse, C extends Command> R dispatch(C command) {
         CommandHandler<C, R> commandHandler = this.commandHandlers.get(command.getClass());
         return ofNullable(commandHandler)
-                .map(handler -> handler.execute(command))
+                .map(handler -> handler.handle(command))
                 .orElseThrow(() -> {
                     LOGGER.error("No command handler found for command: {}", command);
                     return new UnmatchedCommandHandlerException(command);

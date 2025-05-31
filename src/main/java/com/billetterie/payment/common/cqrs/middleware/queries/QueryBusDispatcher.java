@@ -20,6 +20,6 @@ public class QueryBusDispatcher implements QueryBus {
 
     public <R extends QueryResponse, C extends Query> R dispatch(C query) {
         QueryHandler<C, R> queryHandler = this.queryHandlers.get(query.getClass());
-        return ofNullable(queryHandler).map(handler -> handler.execute(query)).orElseThrow(UnmatchedQueryHandlerException::new);
+        return ofNullable(queryHandler).map(handler -> handler.handle(query)).orElseThrow(UnmatchedQueryHandlerException::new);
     }
 }

@@ -2,7 +2,7 @@ package com.billetterie.payment.common.cqrs.query;
 
 public interface QueryHandler<Q extends Query, R extends QueryResponse> {
 
-    R execute(Q query);
+    R handle(Q query);
 
     Class listenTo();
 }
