@@ -195,7 +195,7 @@ public class PaymentATest extends ATest {
                 .isEqualTo(String.format("""
                         <!DOCTYPE html>
                         <html lang="fr" xmlns:sec="http://www.w3.org/1999/xhtml">
-                        
+                        <link rel="stylesheet" href="/css/billetterie.css">
                         <head>
                             <meta charset="UTF-8">
                             <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -203,9 +203,11 @@ public class PaymentATest extends ATest {
                         </head>
                         <body>
                             <h1>Confirmation de commande</h1>
-                            <p>Votre commande a été confirmée avec succès.</p>
-                            <p>Numéro de la commande : <span>%s</span></p>
-                            <p>Montant : <span>%s</span> €</p>
+                            <div class="scenarios">
+                                <p>Votre commande a été confirmée avec succès.</p>
+                                <p>Numéro de la commande : <span>%s</span></p>
+                                <p>Montant : <span>%s</span> €</p>
+                            </div>
                         </body>
                         </html>
                         """, orderId, amount));
@@ -359,7 +361,7 @@ public class PaymentATest extends ATest {
                 .isEqualTo(String.format("""
                         <!DOCTYPE html>
                         <html lang="fr" xmlns:sec="http://www.w3.org/1999/xhtml">
-                        
+                        <link rel="stylesheet" href="/css/billetterie.css">
                         <head>
                             <meta charset="UTF-8">
                             <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -367,8 +369,10 @@ public class PaymentATest extends ATest {
                         </head>
                         <body>
                             <h1>Panier</h1>
-                            <span class="red">Une erreur est survenue lors du paiement</span>
-                            <p>Montant :<span>%s</span> €</p>
+                            <div class="scenarios">
+                                <span class="red">Une erreur est survenue lors du paiement</span>
+                                <p>Montant :<span>%s</span> €</p>
+                            </div>
                         </body>
                         </html>
                         """, amount));
