@@ -1,6 +1,7 @@
 package com.billetterie.payment.use_case;
 
 import com.billetterie.payment.domain.Bank;
+import com.billetterie.payment.domain.Payment;
 import com.billetterie.payment.domain.Transaction;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +14,7 @@ public class Pay {
     }
 
     public Transaction execute(PayCommand command) {
-        return null;
+        return bank.pay(new Payment(command.cartId(), command.cardNumber(), command.expirationDate(), command.cypher(), command.amount()));
     }
 
 
