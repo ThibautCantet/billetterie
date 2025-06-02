@@ -19,35 +19,16 @@ public class TransformToOrderCommandHandler implements CommandHandler<TransformT
     private static final Logger LOGGER = LoggerFactory.getLogger(TransformToOrderCommandHandler.class);
 
     private final Orders orders;
-    private final Bank bank;
-    private final CustomerSupport customerSupport;
-    private final CancelTransactionCommandHandler cancelTransactionCommandHandler;
-    private final AlertTransactionFailureCommandHandler alertTransactionFailureCommandHandler;
 
-    public TransformToOrderCommandHandler(Orders orders, Bank bank, CustomerSupport customerSupport, CancelTransactionCommandHandler cancelTransactionCommandHandler, AlertTransactionFailureCommandHandler alertTransactionFailureCommandHandler) {
+    public TransformToOrderCommandHandler(Orders orders) {
         this.orders = orders;
-        this.bank = bank;
-        this.customerSupport = customerSupport;
-        this.cancelTransactionCommandHandler = cancelTransactionCommandHandler;
-        this.alertTransactionFailureCommandHandler = alertTransactionFailureCommandHandler;
     }
 
     public CommandResponse<Event> handle(TransformToOrderCommand command) {
         Order order = orders.transformToOrder(command.cartId(), command.amount());
 
         if (order.isNotCompleted()) {
-            //TODO: remove cancelTransaction and alertTransactionFailure use cases
-            //TODO: register CancelTransaction, AlertTransactionFailure handlers
-            //TODO: register OrderNotCreatedListener and CancelTransactionFailedListener listeners
-            //TODO: dispatch TransformToOrderCommand in controller
             LOGGER.warn("Cart not transformed to order: {}", command.cartId());
-            var cancel = cancelTransactionCommandHandler.handle(new CancelTransactionCommand(command.transactionId(), command.cartId(), command.amount()));
-            if (cancel.first() instanceof CancelTransactionFailed) {
-                LOGGER.error("Transaction cancellation failed: {}", command.transactionId());
-                alertTransactionFailureCommandHandler.handle(new AlertTransactionFailureCommand(command.transactionId(), command.cartId(), command.amount()));
-            } else {
-                LOGGER.info("Transaction cancelled: {}", command.transactionId());
-            }
 
             var orderNotCreated = new OrderNotCreated(
                     command.transactionId(),

@@ -38,14 +38,11 @@ public class TransformToOrderCommandHandlerTest {
     private CustomerSupport customerSupport;
     @Spy
     @InjectMocks
-    private CancelTransactionCommandHandler cancelTransactionCommandHandler;
-    @Spy
-    @InjectMocks
     private AlertTransactionFailureCommandHandler alertTransactionFailureCommandHandler;
 
     @BeforeEach
     void setUp() {
-        transformToOrderCommandHandler = new TransformToOrderCommandHandler(orders, bank, customerSupport, cancelTransactionCommandHandler, alertTransactionFailureCommandHandler);
+        transformToOrderCommandHandler = new TransformToOrderCommandHandler(orders);
     }
 
     @Nested
