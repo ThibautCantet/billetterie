@@ -11,8 +11,6 @@ import com.billetterie.payment.common.cqrs.command.Command;
 import com.billetterie.payment.common.cqrs.event.Event;
 import com.billetterie.payment.common.cqrs.event.EventHandler;
 import com.billetterie.payment.common.cqrs.event.EventHandlerCommand;
-import com.billetterie.payment.common.cqrs.event.EventHandlerEvent;
-import com.billetterie.payment.common.cqrs.event.EventHandlerVoid;
 
 
 public class EventBusDispatcher implements EventBus {
@@ -38,14 +36,6 @@ public class EventBusDispatcher implements EventBus {
                 if (command != null) {
                     commands.add(command);
                 }
-            } else if (handler instanceof EventHandlerEvent eventHandlerEvent) {
-                Event newEvent = eventHandlerEvent.handle(event);
-                if (newEvent != null) {
-                    this.publish(newEvent);
-                    publishedEvents.add(newEvent);
-                }
-            } else if (handler instanceof EventHandlerVoid eventHandlerVoid) {
-                eventHandlerVoid.handle(event);
             }
         }
 

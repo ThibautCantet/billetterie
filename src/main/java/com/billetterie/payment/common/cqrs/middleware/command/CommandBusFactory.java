@@ -29,9 +29,9 @@ public class CommandBusFactory {
     public CommandBus build() {
         CommandBusDispatcher commandBusDispatcher = buildCommandBusDispatcher();
 
-        EventBus eventBus = buildEventBus();
-
         CommandBusLogger commandBusLogger = new CommandBusLogger(commandBusDispatcher);
+
+        EventBus eventBus = buildEventBus();
 
         return new EventBusDispatcherCommandBus(commandBusLogger, eventBus);
     }
