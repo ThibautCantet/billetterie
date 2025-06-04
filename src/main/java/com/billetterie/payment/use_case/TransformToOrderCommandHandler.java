@@ -3,7 +3,6 @@ package com.billetterie.payment.use_case;
 import com.billetterie.payment.common.cqrs.command.CommandHandler;
 import com.billetterie.payment.common.cqrs.command.CommandResponse;
 import com.billetterie.payment.common.cqrs.event.Event;
-import com.billetterie.payment.domain.CancelTransactionFailed;
 import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Order;
@@ -36,18 +35,7 @@ public class TransformToOrderCommandHandler implements CommandHandler<TransformT
         Order order = orders.transformToOrder(command.cartId(), command.amount());
 
         if (order.isNotCompleted()) {
-            //TODO: remove cancelTransaction and alertTransactionFailure use cases
-            //TODO: register CancelTransaction, AlertTransactionFailure handlers
-            //TODO: register OrderNotCreatedListener and CancelTransactionFailedListener listeners
-            //TODO: dispatch TransformToOrderCommand in controller
             LOGGER.warn("Cart not transformed to order: {}", command.cartId());
-            var cancel = cancelTransactionCommandHandler.handle(new CancelTransactionCommand(command.transactionId(), command.cartId(), command.amount()));
-            if (cancel.first() instanceof CancelTransactionFailed) {
-                LOGGER.error("Transaction cancellation failed: {}", command.transactionId());
-                alertTransactionFailureCommandHandler.handle(new AlertTransactionFailureCommand(command.transactionId(), command.cartId(), command.amount()));
-            } else {
-                LOGGER.info("Transaction cancelled: {}", command.transactionId());
-            }
 
             var orderNotCreated = new OrderNotCreated(
                     command.transactionId(),
