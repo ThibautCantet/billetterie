@@ -10,7 +10,6 @@ import com.billetterie.payment.domain.Order;
 import com.billetterie.payment.domain.OrderCreated;
 import com.billetterie.payment.domain.OrderNotCreated;
 import com.billetterie.payment.domain.Orders;
-import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

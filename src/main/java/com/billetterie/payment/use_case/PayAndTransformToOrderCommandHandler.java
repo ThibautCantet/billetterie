@@ -4,7 +4,6 @@ import com.billetterie.payment.common.cqrs.command.CommandHandler;
 import com.billetterie.payment.common.cqrs.command.CommandResponse;
 import com.billetterie.payment.common.cqrs.event.Event;
 import com.billetterie.payment.domain.Bank;
-import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import com.billetterie.payment.domain.PaymentStatus;
 import com.billetterie.payment.domain.Transaction;
 import com.billetterie.payment.domain.TransactionFailed;
