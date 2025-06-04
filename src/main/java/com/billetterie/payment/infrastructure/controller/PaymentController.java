@@ -10,7 +10,6 @@ import com.billetterie.payment.domain.PaymentStatus;
 import com.billetterie.payment.domain.ValidationRequested;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentDto;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentResultDto;
-import com.billetterie.payment.use_case.PayAndTransformToOrderCommand;
 import com.billetterie.payment.use_case.PayCommand;
 import com.billetterie.payment.use_case.TransformToOrderCommand;
 import com.billetterie.payment.use_case.TransformToOrderCommandHandler;
