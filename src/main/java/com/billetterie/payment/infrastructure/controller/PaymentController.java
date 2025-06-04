@@ -2,6 +2,8 @@ package com.billetterie.payment.infrastructure.controller;
 
 import java.net.URI;
 
+import com.billetterie.payment.common.cqrs.application.CommandController;
+import com.billetterie.payment.common.cqrs.middleware.command.CommandBusFactory;
 import com.billetterie.payment.domain.OrderCreated;
 import com.billetterie.payment.domain.OrderNotCreated;
 import com.billetterie.payment.domain.PaymentStatus;
@@ -9,9 +11,9 @@ import com.billetterie.payment.domain.ValidationRequested;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentDto;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentResultDto;
 import com.billetterie.payment.use_case.PayAndTransformToOrderCommand;
-import com.billetterie.payment.use_case.PayAndTransformToOrderCommandHandler;
-import com.billetterie.payment.use_case.TransformToOrderCommandHandler;
+import com.billetterie.payment.use_case.PayCommand;
 import com.billetterie.payment.use_case.TransformToOrderCommand;
+import com.billetterie.payment.use_case.TransformToOrderCommandHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,17 +33,14 @@ import static com.billetterie.payment.use_case.TransformToOrderCommandHandler.*;
 @RestController
 @RequestMapping(PaymentController.PATH)
 @Slf4j
-//TODO extend CommandController
-public class PaymentController {
+public class PaymentController extends CommandController {
     private static final Logger LOGGER = LoggerFactory.getLogger(PaymentController.class);
 
     public static final String PATH = "/api/payment";
-    private final PayAndTransformToOrderCommandHandler payAndTransformToOrderCommandHandler;
     private final TransformToOrderCommandHandler transformToOrderCommandHandler;
 
-    //TODO: replace PayAndTransformToOrder by a command bus factory and call super(commandBusFactory)
-    public PaymentController(PayAndTransformToOrderCommandHandler payAndTransformToOrderCommandHandler, TransformToOrderCommandHandler transformToOrderCommandHandler) {
-        this.payAndTransformToOrderCommandHandler = payAndTransformToOrderCommandHandler;
+    public PaymentController(CommandBusFactory commandBusFactory, TransformToOrderCommandHandler transformToOrderCommandHandler) {
+        super(commandBusFactory);
         this.transformToOrderCommandHandler = transformToOrderCommandHandler;
     }
 
@@ -53,9 +52,8 @@ public class PaymentController {
      */
     @PostMapping
     public PaymentResultDto processPayment(@RequestBody PaymentDto paymentDto) {
-        //TODO: replace use case by a command bus factory to dispatch PayCommand
-        var result = payAndTransformToOrderCommandHandler.handle(
-                new PayAndTransformToOrderCommand(
+        var result = getCommandBus().dispatch(
+                new PayCommand(
                 paymentDto.cartDto().id(),
                 paymentDto.creditCardDto().number(),
                 paymentDto.creditCardDto().expirationDate(),
