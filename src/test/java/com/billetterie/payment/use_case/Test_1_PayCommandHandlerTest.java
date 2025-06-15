@@ -20,14 +20,14 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class PayCommandHandlerTest {
+public class Test_1_PayCommandHandlerTest {
     private  static final String CART_ID = "cartId";
     private  static final String CARD_NUMBER = "1234 5678 9012 3456";
     private  static final String EXPIRATION_DATE = "12/25";
     private  static final String CYPHER = "999";
     private  static final float AMOUNT = 50.0f;
     private  static final String TRANSACTION_ID = "tx1";
-    private  static final String REDIRECTION_URL = "/3ds";
+    private  static final String REDIRECTION_URL = "/3ds?transactionId=tx1&status=ok&cartId=cartId&amount=50.0";
 
     private PayCommandHandler payCommandHandler;
 
@@ -56,7 +56,7 @@ public class PayCommandHandlerTest {
                             ValidationRequested::redirectUrl,
                             ValidationRequested::amount,
                             ValidationRequested::cartType)
-                    .containsExactly(PaymentStatus.PENDING, TRANSACTION_ID, REDIRECTION_URL, AMOUNT, CLASSIC);
+                    .containsExactly(PaymentStatus.PENDING, TRANSACTION_ID, REDIRECTION_URL + "&cartType=classic", AMOUNT, CLASSIC);
         }
 
         @Test
@@ -110,7 +110,7 @@ public class PayCommandHandlerTest {
                             ValidationRequested::redirectUrl,
                             ValidationRequested::amount,
                             ValidationRequested::cartType)
-                    .containsExactly(PaymentStatus.PENDING, TRANSACTION_ID, REDIRECTION_URL, AMOUNT, RESERVED);
+                    .containsExactly(PaymentStatus.PENDING, TRANSACTION_ID, REDIRECTION_URL + "&cartType=reserved", AMOUNT, RESERVED);
         }
 
         @Test

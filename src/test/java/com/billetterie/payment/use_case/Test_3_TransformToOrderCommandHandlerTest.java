@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class TransformToOrderCommandHandlerTest {
+public class Test_3_TransformToOrderCommandHandlerTest {
 
     private static final String CART_ID = "123456";
     private static final String ORDER_ID = "654654";
@@ -127,7 +127,7 @@ public class TransformToOrderCommandHandlerTest {
                             OrderNotCreated::redirectUrl)
                     .containsExactly(AMOUNT,
                             TRANSACTION_ID,
-                            "/error?cartId=123456&amount=100.0");
+                            "/panier-reserve-error?cartId=123456&amount=100.0");
 
             verify(alertTransactionFailureCommandHandler, never()).handle(any());
 
