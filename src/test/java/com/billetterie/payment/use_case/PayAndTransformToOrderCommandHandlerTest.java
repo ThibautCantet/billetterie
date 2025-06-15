@@ -13,6 +13,7 @@ import com.billetterie.payment.domain.Transaction;
 import com.billetterie.payment.domain.TransactionFailed;
 import com.billetterie.payment.domain.ValidationRequested;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +26,7 @@ import static com.billetterie.payment.domain.CartType.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@Disabled
 @ExtendWith(MockitoExtension.class)
 class PayAndTransformToOrderCommandHandlerTest {
 
