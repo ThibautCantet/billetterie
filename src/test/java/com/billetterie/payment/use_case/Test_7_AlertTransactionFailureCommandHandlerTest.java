@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class AlertTransactionFailureCommandHandlerTest {
+class Test_7_AlertTransactionFailureCommandHandlerTest {
 
     private AlertTransactionFailureCommandHandler alertTransactionFailureCommandHandler;
 

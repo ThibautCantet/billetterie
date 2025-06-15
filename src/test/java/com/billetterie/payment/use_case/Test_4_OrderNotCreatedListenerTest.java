@@ -1,7 +1,7 @@
-package com.billetterie.payment.listener;
+package com.billetterie.payment.use_case;
 
 import com.billetterie.payment.domain.OrderNotCreated;
-import com.billetterie.payment.use_case.CancelTransactionCommand;
+import com.billetterie.payment.listener.OrderNotCreatedListener;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,7 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
-public class OrderNotCreatedListenerTest {
+public class Test_4_OrderNotCreatedListenerTest {
 
     private static final String TRANSACTION_ID = "tx123";
     private static final float AMOUNT = 100.0f;
