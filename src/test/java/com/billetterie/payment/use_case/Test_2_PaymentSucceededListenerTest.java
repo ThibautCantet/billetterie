@@ -1,8 +1,8 @@
-package com.billetterie.payment.listener;
+package com.billetterie.payment.use_case;
 
 import com.billetterie.payment.domain.PaymentStatus;
 import com.billetterie.payment.domain.PaymentSucceeded;
-import com.billetterie.payment.use_case.TransformToOrderCommand;
+import com.billetterie.payment.listener.PaymentSucceededListener;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.*;
 
 
 @ExtendWith(MockitoExtension.class)
-class PaymentSucceededListenerTest {
+class Test_2_PaymentSucceededListenerTest {
 
     private PaymentSucceededListener paymentSucceededListener;
 

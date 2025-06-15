@@ -1,7 +1,7 @@
-package com.billetterie.payment.listener;
+package com.billetterie.payment.use_case;
 
 import com.billetterie.payment.domain.CancelTransactionFailed;
-import com.billetterie.payment.use_case.AlertTransactionFailureCommand;
+import com.billetterie.payment.listener.CancelTransactionFailedListener;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,7 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
-public class CancelTransactionFailedListenerTest {
+public class Test_5_CancelTransactionFailedListenerTest {
 
     private static final String TRANSACTION_ID = "tx123";
     private static final String CART_ID = "cartId";

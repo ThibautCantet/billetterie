@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class TransformToOrderCommandHandlerTest {
+public class Test_3_TransformToOrderCommandHandlerTest {
 
     private static final String CART_ID = "123456";
     private static final String ORDER_ID = "654654";

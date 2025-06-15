@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class CancelTransactionCommandHandlerTest {
+class Test_6_CancelTransactionCommandHandlerTest {
 
     private static final String TRANSACTION_ID = "tx123";
     private static final float AMOUNT = 100f;
