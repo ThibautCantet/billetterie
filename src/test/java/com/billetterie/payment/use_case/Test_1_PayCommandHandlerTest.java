@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class PayCommandHandlerTest {
+public class Test_1_PayCommandHandlerTest {
     private  static final String CART_ID = "cartId";
     private  static final String CARD_NUMBER = "1234 5678 9012 3456";
     private  static final String EXPIRATION_DATE = "12/25";
