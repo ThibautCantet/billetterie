@@ -76,6 +76,7 @@ public class TransformToOrderCommandHandler implements CommandHandler<TransformT
         }
         //TODO: replace payAndTransformToOrderResult by a OrderCreated event
         //TODO: use OrderCreated.of
+        //TODO: then remove the PayAndTransformToOrderResult record
         PayAndTransformToOrderResult.succeeded(
                 command.transactionId(),
                 order.id(),
