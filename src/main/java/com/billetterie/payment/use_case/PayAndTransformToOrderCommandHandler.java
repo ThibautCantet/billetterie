@@ -30,25 +30,15 @@ public class PayAndTransformToOrderCommandHandler implements CommandHandler<PayA
     public CommandResponse<Event> handle(PayAndTransformToOrderCommand command) {
         var response = pay.handle(new PayCommand(command.cartId(), command.cardNumber(), command.expirationDate(), command.cypher(), command.amount(), command.cartType()));
 
-        var transaction = new Transaction("id", null, null);
         if (response.first() instanceof ValidationRequested validationRequested) {
-            //TODO: replace payAndTransformToOrderResult by a ValidationRequested event
-            var pendingTransaction = PayAndTransformToOrderResult.pending(
-                    transaction.id(),
-                    transaction.redirectionUrl(),
-                    command.amount(),
-                    command.cartType());
-            LOGGER.info("Transaction is pending: {}", pendingTransaction);
-            return null;
+            LOGGER.info("Transaction is pending: {}", validationRequested);
+            return new CommandResponse<>(validationRequested);
         }
 
         if (response.first() instanceof TransactionFailed transactionFailed) {
-            //TODO: replace payAndTransformToOrderResult by a TransactionFailed event
             //TODO: then remove the PayAndTransformToOrderResult record
-            var failedTransaction = PayAndTransformToOrderResult.failed(
-                    transaction.id());
-            LOGGER.info("Transaction failed: {}", failedTransaction);
-            return null;
+            LOGGER.info("Transaction failed: {}", transactionFailed);
+            return new CommandResponse<>(transactionFailed);
         }
 
         String transactionId = response.firstAs(PaymentSucceeded.class).transactionId();
