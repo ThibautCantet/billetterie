@@ -5,10 +5,9 @@ import com.billetterie.payment.common.cqrs.command.CommandResponse;
 import com.billetterie.payment.common.cqrs.event.Event;
 import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.PaymentSucceeded;
+import com.billetterie.payment.domain.Transaction;
 import com.billetterie.payment.domain.TransactionFailed;
 import com.billetterie.payment.domain.ValidationRequested;
-import com.billetterie.payment.domain.PayAndTransformToOrderResult;
-import com.billetterie.payment.domain.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -30,24 +29,15 @@ public class PayAndTransformToOrderCommandHandler implements CommandHandler<PayA
     public CommandResponse<Event> handle(PayAndTransformToOrderCommand command) {
         var response = pay.handle(new PayCommand(command.cartId(), command.cardNumber(), command.expirationDate(), command.cypher(), command.amount()));
 
-        var transaction = new Transaction("id", null, null);
         if (response.first() instanceof ValidationRequested validationRequested) {
-            //TODO: replace payAndTransformToOrderResult by a ValidationRequested event
-            var pendingTransaction = PayAndTransformToOrderResult.pending(
-                    transaction.id(),
-                    transaction.redirectionUrl(),
-                    command.amount());
-            LOGGER.info("Transaction is pending: {}", pendingTransaction);
-            return null;
+            LOGGER.info("Transaction is pending: {}", validationRequested);
+            return new CommandResponse<>(validationRequested);
         }
 
         if (response.first() instanceof TransactionFailed transactionFailed) {
-            //TODO: replace payAndTransformToOrderResult by a TransactionFailed event
             //TODO: then remove the PayAndTransformToOrderResult record
-            var failedTransaction = PayAndTransformToOrderResult.failed(
-                    transaction.id());
-            LOGGER.info("Transaction failed: {}", failedTransaction);
-            return null;
+            LOGGER.info("Transaction failed: {}", transactionFailed);
+            return new CommandResponse<>(transactionFailed);
         }
 
         String transactionId = response.firstAs(PaymentSucceeded.class).transactionId();

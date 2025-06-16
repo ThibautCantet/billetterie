@@ -60,6 +60,7 @@ public class TransformToOrderCommandHandler implements CommandHandler<TransformT
         LOGGER.info("Cart transformed to order: {}", order.id());
         //TODO: replace payAndTransformToOrderResult by a OrderCreated event
         //TODO: use OrderCreated.of
+        //TODO: then remove the PayAndTransformToOrderResult record
         PayAndTransformToOrderResult.succeeded(
                 command.transactionId(),
                 order.id(),
