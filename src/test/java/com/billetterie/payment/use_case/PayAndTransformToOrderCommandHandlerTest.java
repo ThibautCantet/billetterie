@@ -62,7 +62,6 @@ class PayAndTransformToOrderCommandHandlerTest {
     @BeforeEach
     void setUp() {
         payAndTransformToOrderCommandHandler = new PayAndTransformToOrderCommandHandler(
-                bank,
                 new TransformToOrderCommandHandler(orders, bank, customerSupport, cancelTransactionCommandHandler, alertTransactionFailureCommandHandler),
                 payCommandHandler);
     }
