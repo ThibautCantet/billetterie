@@ -45,7 +45,7 @@ public class Test_3_TransformToOrderCommandHandlerTest {
 
     @BeforeEach
     void setUp() {
-        transformToOrderCommandHandler = new TransformToOrderCommandHandler(orders, bank, customerSupport, cancelTransactionCommandHandler, alertTransactionFailureCommandHandler);
+        transformToOrderCommandHandler = new TransformToOrderCommandHandler(orders, cancelTransactionCommandHandler, alertTransactionFailureCommandHandler);
     }
 
     @Nested
