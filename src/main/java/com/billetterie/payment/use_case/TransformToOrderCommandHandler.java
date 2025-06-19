@@ -4,8 +4,6 @@ import com.billetterie.payment.common.cqrs.command.CommandHandler;
 import com.billetterie.payment.common.cqrs.command.CommandResponse;
 import com.billetterie.payment.common.cqrs.event.Event;
 import com.billetterie.payment.domain.CancelTransactionFailed;
-import com.billetterie.payment.domain.Bank;
-import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Order;
 import com.billetterie.payment.domain.Orders;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
@@ -18,15 +16,11 @@ public class TransformToOrderCommandHandler implements CommandHandler<TransformT
     private static final Logger LOGGER = LoggerFactory.getLogger(TransformToOrderCommandHandler.class);
 
     private final Orders orders;
-    private final Bank bank;
-    private final CustomerSupport customerSupport;
     private final CancelTransactionCommandHandler cancelTransactionCommandHandler;
     private final AlertTransactionFailureCommandHandler alertTransactionFailureCommandHandler;
 
-    public TransformToOrderCommandHandler(Orders orders, Bank bank, CustomerSupport customerSupport, CancelTransactionCommandHandler cancelTransactionCommandHandler, AlertTransactionFailureCommandHandler alertTransactionFailureCommandHandler) {
+    public TransformToOrderCommandHandler(Orders orders, CancelTransactionCommandHandler cancelTransactionCommandHandler, AlertTransactionFailureCommandHandler alertTransactionFailureCommandHandler) {
         this.orders = orders;
-        this.bank = bank;
-        this.customerSupport = customerSupport;
         this.cancelTransactionCommandHandler = cancelTransactionCommandHandler;
         this.alertTransactionFailureCommandHandler = alertTransactionFailureCommandHandler;
     }
