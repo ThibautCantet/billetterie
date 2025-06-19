@@ -39,7 +39,7 @@ public class TransformToOrder {
             var failed = PayAndTransformToOrderResult.failed(
                     command.transactionId(),
                     getErrorCartUrl(command.cartId(), command.amount()));
-            LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", failed);
+            LOGGER.info("Cart not transformed into order: {}", failed);
 
             return failed;
         }
