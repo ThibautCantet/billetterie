@@ -3,9 +3,7 @@ package com.billetterie.payment.use_case;
 import com.billetterie.payment.common.cqrs.command.CommandHandler;
 import com.billetterie.payment.common.cqrs.command.CommandResponse;
 import com.billetterie.payment.common.cqrs.event.Event;
-import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.PaymentSucceeded;
-import com.billetterie.payment.domain.Transaction;
 import com.billetterie.payment.domain.TransactionFailed;
 import com.billetterie.payment.domain.ValidationRequested;
 import org.slf4j.Logger;
@@ -16,18 +14,16 @@ import org.springframework.stereotype.Service;
 public class PayAndTransformToOrderCommandHandler implements CommandHandler<PayAndTransformToOrderCommand, CommandResponse<Event>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(PayAndTransformToOrderCommandHandler.class);
 
-    private final Bank bank;
     private final TransformToOrderCommandHandler transformToOrderCommandHandler;
-    private final PayCommandHandler pay;
+    private final PayCommandHandler payCommandHandler;
 
-    public PayAndTransformToOrderCommandHandler(Bank bank, TransformToOrderCommandHandler transformToOrderCommandHandler, PayCommandHandler pay) {
-        this.bank = bank;
+    public PayAndTransformToOrderCommandHandler(TransformToOrderCommandHandler transformToOrderCommandHandler, PayCommandHandler payCommandHandler) {
         this.transformToOrderCommandHandler = transformToOrderCommandHandler;
-        this.pay = pay;
+        this.payCommandHandler = payCommandHandler;
     }
 
     public CommandResponse<Event> handle(PayAndTransformToOrderCommand command) {
-        var response = pay.handle(new PayCommand(command.cartId(), command.cardNumber(), command.expirationDate(), command.cypher(), command.amount()));
+        var response = payCommandHandler.handle(new PayCommand(command.cartId(), command.cardNumber(), command.expirationDate(), command.cypher(), command.amount()));
 
         if (response.first() instanceof ValidationRequested validationRequested) {
             LOGGER.info("Transaction is pending: {}", validationRequested);
