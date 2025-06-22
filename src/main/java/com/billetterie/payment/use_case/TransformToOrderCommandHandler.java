@@ -37,7 +37,7 @@ public class TransformToOrderCommandHandler implements CommandHandler<TransformT
         if (order.isNotCompleted()) {
             LOGGER.warn("Cart not transformed to order: {}", command.cartId());
             var cancel = cancelTransactionCommandHandler.handle(new CancelTransactionCommand(command.transactionId(), command.cartId(), command.amount()));
-            if (cancel.first() instanceof CancelTransactionFailed) {
+            if (cancel.events().stream().anyMatch(e -> e instanceof CancelTransactionFailed)) {
                 LOGGER.error("Transaction cancellation failed: {}", command.transactionId());
                 alertTransactionFailureCommandHandler.handle(new AlertTransactionFailureCommand(command.transactionId(), command.cartId(), command.amount()));
             } else {
