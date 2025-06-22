@@ -1,5 +1,7 @@
 package com.billetterie.payment.use_case;
 
+import java.util.List;
+
 import com.billetterie.payment.common.cqrs.command.CommandHandler;
 import com.billetterie.payment.common.cqrs.command.CommandResponse;
 import com.billetterie.payment.common.cqrs.event.Event;
@@ -18,7 +20,7 @@ public class CancelTransactionCommandHandler implements CommandHandler<CancelTra
         var cancel = bank.cancel(command.transactionId(), command.amount());
         //TODO: depending on the cancel result, return a CommandResponse
         // with CancelTransactionSucceeded or CancelTransactionFailed.of event
-        return null;
+        return new CommandResponse<>(List.of());
     }
 
     @Override
