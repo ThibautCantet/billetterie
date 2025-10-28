@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
 	id 'war'
-	id 'org.springframework.boot' version '3.5.0'
+	id 'org.springframework.boot' version '3.5.7'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -20,24 +20,24 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.19.0'
+	implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.20'
 	compileOnly group:'org.projectlombok', name:'lombok', version: property('lombok.version')
 	implementation group: 'org.projectlombok', name:'lombok', version: property('lombok.version')
 	implementation group: 'org.springframework.boot', name:'spring-boot-starter-thymeleaf', version: property('springboot.version')
 	implementation group: 'org.springframework.boot', name:'spring-boot-starter-mail', version: property('springboot.version')
-	implementation group: 'org.springframework', name: 'spring-context-support', version: '6.2.7'
+	implementation group: 'org.springframework', name: 'spring-context-support', version: '6.2.12'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	testImplementation 'io.rest-assured:rest-assured:5.5.1'
+	testImplementation 'io.rest-assured:rest-assured:5.5.6'
 	testImplementation 'io.cucumber:cucumber-java'
 	testImplementation 'io.cucumber:cucumber-junit-platform-engine'
 	testImplementation 'io.cucumber:cucumber-junit'
 	testImplementation 'org.junit.platform:junit-platform-suite'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api'
-	testImplementation 'org.assertj:assertj-core:3.27.3'
+	testImplementation 'org.assertj:assertj-core:3.27.4'
 	testImplementation 'org.wiremock:wiremock-standalone:3.9.1'
-	implementation 'io.cucumber:cucumber-spring:7.22.1'
+	implementation 'io.cucumber:cucumber-spring'
 }
 
 dependencyManagement {
