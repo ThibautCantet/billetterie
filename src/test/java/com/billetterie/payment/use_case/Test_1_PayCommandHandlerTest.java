@@ -37,7 +37,7 @@ public class Test_1_PayCommandHandlerTest {
 
     @BeforeEach
     void setUp() {
-        payCommandHandler = new PayCommandHandler(bank, transformToOrderCommandHandler);
+        payCommandHandler = new PayCommandHandler(bank);
     }
 
     @Nested

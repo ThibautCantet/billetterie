@@ -1,11 +1,11 @@
 package com.billetterie.payment.use_case;
 
-import java.util.List;
-
 import com.billetterie.payment.common.cqrs.command.CommandHandler;
 import com.billetterie.payment.common.cqrs.command.CommandResponse;
 import com.billetterie.payment.common.cqrs.event.Event;
 import com.billetterie.payment.domain.Bank;
+import com.billetterie.payment.domain.CancelTransactionFailed;
+import com.billetterie.payment.domain.CancelTransactionSucceeded;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -18,9 +18,10 @@ public class CancelTransactionCommandHandler implements CommandHandler<CancelTra
 
     public CommandResponse<Event> handle(CancelTransactionCommand  command) {
         var cancel = bank.cancel(command.transactionId(), command.amount());
-        //TODO: depending on the cancel result, return a CommandResponse
-        // with CancelTransactionSucceeded or CancelTransactionFailed.of event
-        return new CommandResponse<>(List.of());
+        if (cancel) {
+            return new CommandResponse<>(new CancelTransactionSucceeded(command.transactionId()));
+        }
+        return new CommandResponse<>(CancelTransactionFailed.of(command));
     }
 
     @Override
