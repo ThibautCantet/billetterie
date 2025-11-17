@@ -14,6 +14,7 @@ public class AppErrorController {
     @GetMapping
     public String getCart(@RequestParam("cartId") String cartId,
                            @RequestParam("amount") Float amount,
+                           @RequestParam(value = "error", required = false) Boolean error,
                            Model model) {
         model.addAttribute("cartId", cartId);
         model.addAttribute("amount", amount);
