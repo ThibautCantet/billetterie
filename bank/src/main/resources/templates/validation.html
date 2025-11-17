@@ -10,6 +10,7 @@
 <input th:value="${status}" id="status" type="hidden"/>
 <input th:value="${amount}" id="amount" type="hidden"/>
 <input th:value="${cartId}" id="cartId" type="hidden"/>
+<input th:value="${cartType}" id="cartType" type="hidden"/>
 <img src="/image/banque.png" height="225" width="300"/>
 <br>
 <button onclick="redirect()" id="submit">
@@ -23,11 +24,13 @@
         const status = document.getElementById('status').value;
         const amount = document.getElementById('amount').value;
         const cartId = document.getElementById('cartId').value;
+        const cartType = document.getElementById('cartType').value;
 
         const redirection = 'http://localhost:8080/api/payment/cart/confirmation?transactionId=' + transactionId + '' +
                 '&status=' + status +
                 '&amount=' + amount +
-                '&cartId=' + cartId;
+                '&cartId=' + cartId +
+                '&cartType=' + cartType.toUpperCase();
         console.log(redirection);
         window.location.href = redirection;
     }

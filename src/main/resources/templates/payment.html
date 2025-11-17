@@ -49,6 +49,11 @@
     <input type="text" id="expirationDate" name="expirationDate" step="0.01" required value="10/2030">
     <label for="cypher">Cryptogramme :</label>
     <input type="number" id="cypher" name="cypher" step="0.01" required value="123">
+    <label for="cartType">Type :</label>
+    <select name="cartType" id="cartType" required>
+        <option value="CLASSIC">Classique</option>
+        <option value="RESERVED">Reservé</option>
+    </select>
     <button type="button" onclick="submitPayment()">Payer</button>
 </form>
 
@@ -59,9 +64,10 @@
         const cardNumber = document.getElementById('cardNumber').value;
         const expirationDate = document.getElementById('expirationDate').value;
         const cypher = document.getElementById('cypher').value;
+        const cartType = document.getElementById('cartType').value;
 
         const paymentData = {
-            cartDto: {id: cartId, amount: parseFloat(amount)},
+            cartDto: {id: cartId, amount: parseFloat(amount), type: cartType},
             creditCardDto: {number: cardNumber, expirationDate: expirationDate, cypher: cypher}
         };
 

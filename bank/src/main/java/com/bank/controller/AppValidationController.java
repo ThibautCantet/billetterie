@@ -25,11 +25,13 @@ public class AppValidationController {
             @RequestParam(name = "status") String status,
             @RequestParam(name = "cartId") String cartId,
             @RequestParam(name = "amount") Float amount,
+            @RequestParam(name = "cartType") String cartType,
             Model model) {
         model.addAttribute("transactionId", transactionId);
         model.addAttribute("status", status);
         model.addAttribute("cartId", cartId);
         model.addAttribute("amount", amount);
+        model.addAttribute("cartType", cartType);
         return "validation";
     }
 }

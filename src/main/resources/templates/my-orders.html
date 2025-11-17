@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
+<link rel="stylesheet" href="/css/billetterie.css">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Commandes</title>
+</head>
+<body>
+    <h1>Mes Commandes</h1>
+    <div class="scenarios">
+        <p>Toutes vos commandes.</p>
+        <p>Numéro de la commande : <span th:text="${id}"><strong>ID de commande :</strong> ${id}</span></p>
+        <p>Montant : <span th:text="${amount}"><strong>Montant :</strong> ${amount} €</span> €</p>
+    </div>
+</body>
+</html>
