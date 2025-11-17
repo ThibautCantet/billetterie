@@ -5,12 +5,14 @@ import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Order;
 import com.billetterie.payment.domain.Orders;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static com.billetterie.payment.domain.CartType.*;
 import static com.billetterie.payment.domain.PaymentStatus.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -34,70 +36,141 @@ public class TransformToOrderTest {
     @Mock
     private CustomerSupport customerSupport;
 
-    @Test
-    void should_return_ok_when_transform_to_order_succeeds() {
-        // given
-        var order = new Order(ORDER_ID, AMOUNT);
-        when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
+    @Nested
+    class PanierClassique {
+        @Test
+        void should_return_ok_when_transform_to_order_succeeds() {
+            // given
+            var order = new Order(ORDER_ID, AMOUNT);
+            when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
 
-        // when
-        var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT);
+            // when
+            var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT, CLASSIC);
 
-        // then
-        assertThat(result).extracting(PayAndTransformToOrderResult::status,
-                PayAndTransformToOrderResult::transactionId,
-                PayAndTransformToOrderResult::orderId,
-                PayAndTransformToOrderResult::redirectUrl,
-                PayAndTransformToOrderResult::amount)
-                .containsExactly(SUCCESS, TRANSACTION_ID, ORDER_ID, "/confirmation/654654?amount=100.0", AMOUNT);
+            // then
+            assertThat(result).extracting(PayAndTransformToOrderResult::status,
+                            PayAndTransformToOrderResult::transactionId,
+                            PayAndTransformToOrderResult::orderId,
+                            PayAndTransformToOrderResult::redirectUrl,
+                            PayAndTransformToOrderResult::amount)
+                    .containsExactly(SUCCESS, TRANSACTION_ID, ORDER_ID, "/confirmation/654654?amount=100.0", AMOUNT);
+        }
+
+        @Test
+        void should_return_failed_and_cancel_transaction_when_transform_to_order_fails() {
+            // given
+            var order = new Order(null, 0f);
+            when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
+
+            when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(true);
+
+            // when
+            var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT, CLASSIC);
+
+            // then
+            assertThat(result).extracting(PayAndTransformToOrderResult::status,
+                            PayAndTransformToOrderResult::transactionId,
+                            PayAndTransformToOrderResult::redirectUrl)
+                    .containsExactly(FAILED,
+                            TRANSACTION_ID,
+                            "/cart?error=true&cartId=123456&amount=100.0");
+
+            verify(bank).cancel(TRANSACTION_ID, AMOUNT);
+
+            verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
+        }
+
+        @Test
+        void should_return_failed_and_alert_when_transform_to_order_fails_and_cancel_transaction_fails() {
+            // given
+            var order = new Order(null, 0f);
+            when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
+
+            when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(false);
+
+            // when
+            var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT, CLASSIC);
+
+            // then
+            assertThat(result).extracting(PayAndTransformToOrderResult::status,
+                            PayAndTransformToOrderResult::transactionId,
+                            PayAndTransformToOrderResult::redirectUrl)
+                    .containsExactly(FAILED,
+                            TRANSACTION_ID,
+                            "/cart?error=true&cartId=123456&amount=100.0");
+
+            verify(bank).cancel(TRANSACTION_ID, AMOUNT);
+
+            verify(customerSupport).alertTransactionFailure(TRANSACTION_ID, CART_ID, AMOUNT);
+        }
     }
 
-    @Test
-    void should_return_failed_and_cancel_transaction_when_transform_to_order_fails() {
-        // given
-        var order = new Order(null, 0f);
-        when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
+    @Nested
+    class PanierRéservé {
+        @Test
+        void should_return_ok_when_transform_to_order_succeeds() {
+            // given
+            var order = new Order(ORDER_ID, AMOUNT);
+            when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
 
-        when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(true);
+            // when
+            var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT, RESERVED);
 
-        // when
-        var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT);
+            // then
+            assertThat(result).extracting(PayAndTransformToOrderResult::status,
+                            PayAndTransformToOrderResult::transactionId,
+                            PayAndTransformToOrderResult::orderId,
+                            PayAndTransformToOrderResult::redirectUrl,
+                            PayAndTransformToOrderResult::amount)
+                    .containsExactly(SUCCESS, TRANSACTION_ID, ORDER_ID, "/my-orders?id=654654&amount=100.0", AMOUNT);
+        }
 
-        // then
-        assertThat(result).extracting(PayAndTransformToOrderResult::status,
-                PayAndTransformToOrderResult::transactionId,
-                PayAndTransformToOrderResult::redirectUrl)
-                .containsExactly(FAILED,
-                        TRANSACTION_ID,
-                        "/cart?error=true&cartId=123456&amount=100.0");
+        @Test
+        void should_return_failed_and_cancel_transaction_when_transform_to_order_fails() {
+            // given
+            var order = new Order(null, 0f);
+            when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
 
-        verify(bank).cancel(TRANSACTION_ID, AMOUNT);
+            when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(true);
 
-        verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
+            // when
+            var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT, RESERVED);
+
+            // then
+            assertThat(result).extracting(PayAndTransformToOrderResult::status,
+                            PayAndTransformToOrderResult::transactionId,
+                            PayAndTransformToOrderResult::redirectUrl)
+                    .containsExactly(FAILED,
+                            TRANSACTION_ID,
+                            "/panier-reserve-error?cartId=123456&amount=100.0");
+
+            verify(bank).cancel(TRANSACTION_ID, AMOUNT);
+
+            verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
+        }
+
+        @Test
+        void should_return_failed_and_alert_when_transform_to_order_fails_and_cancel_transaction_fails() {
+            // given
+            var order = new Order(null, 0f);
+            when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
+
+            when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(false);
+
+            // when
+            var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT, RESERVED);
+
+            // then
+            assertThat(result).extracting(PayAndTransformToOrderResult::status,
+                            PayAndTransformToOrderResult::transactionId,
+                            PayAndTransformToOrderResult::redirectUrl)
+                    .containsExactly(FAILED,
+                            TRANSACTION_ID,
+                            "/panier-reserve-error?cartId=123456&amount=100.0");
+
+            verify(bank).cancel(TRANSACTION_ID, AMOUNT);
+
+            verify(customerSupport).alertTransactionFailure(TRANSACTION_ID, CART_ID, AMOUNT);
+        }
     }
-
-    @Test
-    void should_return_failed_and_alert_when_transform_to_order_fails_and_cancel_transaction_fails() {
-        // given
-        var order = new Order(null, 0f);
-        when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
-
-        when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(false);
-
-        // when
-        var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT);
-
-        // then
-        assertThat(result).extracting(PayAndTransformToOrderResult::status,
-                PayAndTransformToOrderResult::transactionId,
-                PayAndTransformToOrderResult::redirectUrl)
-                .containsExactly(FAILED,
-                        TRANSACTION_ID,
-                        "/cart?error=true&cartId=123456&amount=100.0");
-
-        verify(bank).cancel(TRANSACTION_ID, AMOUNT);
-
-        verify(customerSupport).alertTransactionFailure(TRANSACTION_ID, CART_ID, AMOUNT);
-    }
-
 }

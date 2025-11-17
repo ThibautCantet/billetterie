@@ -61,14 +61,15 @@ public class BankController {
 
     @GetMapping("/payments/3ds")
     public ResponseEntity<Object> pay3ds(
-            @RequestParam(name = "status") String status,
             @RequestParam(name = "cartId") String cartId,
             @RequestParam(name = "amount") Float amount,
-            @RequestParam(name = "transactionId") String transactionId) {
+            @RequestParam(name = "transactionId") String transactionId,
+            @RequestParam(name = "cartType") String cartType
+            ) {
         var headers = new HttpHeaders();
         headers.setLocation(URI.create(
-                String.format("http://localhost:8080/api/payment/cart/confirmation?transactionId=%s&status=ok&cartId=%s&amount=%s",
-                        transactionId, cartId, amount)));
+                String.format("http://localhost:8080/api/payment/cart/confirmation?transactionId=%s&status=ok&cartId=%s&amount=%s&cartType=%s",
+                        transactionId, cartId, amount, cartType)));
         return new ResponseEntity<>(headers, HttpStatusCode.valueOf(301));
     }
 }

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
+<link rel="stylesheet" href="/css/billetterie.css">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panier reservé erreur</title>
+</head>
+<body>
+    <h1>Panier reservé erreur</h1>
+    <div class="scenarios">
+        <span class="red">Une erreur est survenue lors du paiement de votre panier reservé :</span><span th:text="${cartId}"> ${cartId}</span>
+        <p>Montant :<span th:text="${amount}"><strong>Montant :</strong> ${amount} €</span> €</p>
+    </div>
+</body>
+</html>

@@ -1,14 +1,13 @@
 package com.billetterie.payment.use_case;
 
 import com.billetterie.payment.domain.Bank;
+import com.billetterie.payment.domain.CartType;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import com.billetterie.payment.domain.Payment;
 import com.billetterie.payment.domain.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-
-import static com.billetterie.payment.domain.PaymentStatus.*;
 
 @Service
 public class PayAndTransformToOrder {
@@ -22,14 +21,15 @@ public class PayAndTransformToOrder {
         this.transformToOrder = transformToOrder;
     }
 
-    public PayAndTransformToOrderResult execute(String cartId, String cardNumber, String expirationDate, String cypher, float amount) {
+    public PayAndTransformToOrderResult execute(String cartId, String cardNumber, String expirationDate, String cypher, float amount, CartType type) {
         Transaction transaction = bank.pay(new Payment(cardNumber, expirationDate, cypher, cartId, amount));
 
         if (transaction.isPending()) {
             var pendingTransaction = PayAndTransformToOrderResult.pending(
                     transaction.id(),
                     transaction.redirectionUrl(),
-                    amount);
+                    amount,
+                    type);
             LOGGER.info("Transaction is pending: {}", pendingTransaction);
             return pendingTransaction;
         }
@@ -43,6 +43,6 @@ public class PayAndTransformToOrder {
 
         LOGGER.info("Transaction for cart id {} succeeded, with transaction id:{}", cartId, transaction.id());
 
-        return transformToOrder.execute(transaction.id(), cartId, amount);
+        return transformToOrder.execute(transaction.id(), cartId, amount, type);
     }
 }

@@ -2,7 +2,7 @@ package com.billetterie.payment.infrastructure.controller;
 
 import java.net.URI;
 
-import com.billetterie.payment.domain.PayAndTransformToOrderResult;
+import com.billetterie.payment.domain.CartType;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import com.billetterie.payment.domain.PaymentStatus;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentDto;
@@ -53,7 +53,8 @@ public class PaymentController {
                 paymentDto.creditCardDto().number(),
                 paymentDto.creditCardDto().expirationDate(),
                 paymentDto.creditCardDto().cypher(),
-                paymentDto.cartDto().amount());
+                paymentDto.cartDto().amount(),
+                paymentDto.cartDto().type());
 
         if (result.status() == FAILED) {
             return new PaymentResultDto(result.status());
@@ -72,14 +73,21 @@ public class PaymentController {
             @RequestParam(name = "transactionId") String transactionId,
             @RequestParam(name = "status") String status,
             @RequestParam(name = "cartId") String cartId,
-            @RequestParam(name = "amount") Float amount) {
+            @RequestParam(name = "amount") Float amount,
+            @RequestParam(name = "cartType") CartType type) {
         PaymentResultDto response;
         PayAndTransformToOrderResult result;
         var headers = new HttpHeaders();
         if (status.equals("ko")) {
-            response = redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
+            String url;
+            if (type == CartType.CLASSIC) {
+                url = getErrorCartUrl(cartId, amount);
+            } else {
+                url = getErrorUrl(cartId, amount);
+            }
+            response = redirectToCartOnError(amount, url, headers);
         } else {
-            result = transformToOrder.execute(transactionId, cartId, amount);
+            result = transformToOrder.execute(transactionId, cartId, amount, type);
 
             if (result.status() == PaymentStatus.FAILED) {
                 response = redirectToCartOnError(amount, result.redirectUrl(), headers);

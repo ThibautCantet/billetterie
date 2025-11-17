@@ -10,7 +10,7 @@
         Alors on reste sur le paiement "1234567890123456" de 100 euros
         Et le panier "1234567890123456" n'a pas été transformé en commande
 
-    Scénario: Validation du paiement sans 3DS OK, tranformation du panier en commande KO, on reste sur le paiement
+    Scénario: Validation du paiement sans 3DS OK, transformation du panier en commande KO, on reste sur le paiement
         Etant donné un panier "1234567890123456" de 100 euros
         Et des information de paiement suivant numéro de carte "1234567890123456"
         Et une date d'expiration "12/27" et un cryptogramme "123"

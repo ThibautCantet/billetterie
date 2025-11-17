@@ -1,6 +1,7 @@
 package com.billetterie.payment.use_case;
 
 import com.billetterie.payment.domain.Bank;
+import com.billetterie.payment.domain.CartType;
 import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Order;
 import com.billetterie.payment.domain.Orders;
@@ -23,7 +24,7 @@ public class TransformToOrder {
         this.customerSupport = customerSupport;
     }
 
-    public PayAndTransformToOrderResult execute(String transactionId, String cartId, float amount) {
+    public PayAndTransformToOrderResult execute(String transactionId, String cartId, float amount, CartType type) {
         Order order = orders.transformToOrder(cartId, amount);
 
         if (order.isNotCompleted()) {
@@ -36,22 +37,41 @@ public class TransformToOrder {
                 LOGGER.info("Transaction cancelled: {}", transactionId);
             }
 
-            var failed = PayAndTransformToOrderResult.failed(
-                    transactionId,
-                    getErrorCartUrl(cartId, amount));
-            LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", failed);
+            String errorUrl;
+            if (type == CartType.CLASSIC) {
+                errorUrl = getErrorCartUrl(cartId, amount);
+                LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", cartId);
+            } else {
+                errorUrl = getErrorUrl(cartId, amount);
+                LOGGER.info("Panier reservé not transformed into order and redirect error: {}", cartId);
+            }
 
-            return failed;
+            return PayAndTransformToOrderResult.failed(
+                    transactionId,
+                    errorUrl);
         }
 
-        LOGGER.info("Cart transformed to order: {}", order.id());
+        String url;
+        if (type == CartType.CLASSIC) {
+            url = String.format("/confirmation/%s?amount=%s", order.id(), amount);
+            LOGGER.info("Cart transformed to order: {}", order.id());
+        } else {
+            url = String.format("/my-orders?id=%s&amount=%s", order.id(), amount);
+            LOGGER.info("Panier réservé transformed to order: {}", order.id());
+        }
         return PayAndTransformToOrderResult.succeeded(
                 transactionId,
                 order.id(),
-                amount);
+                amount,
+                type,
+                url);
     }
 
     public static String getErrorCartUrl(String cartId, float amount) {
         return "/cart?error=true&cartId=" + cartId + "&amount=" + amount;
+    }
+
+    public static String getErrorUrl(String cartId, float amount) {
+        return "/panier-reserve-error?cartId=" + cartId + "&amount=" + amount;
     }
 }

@@ -1,5 +1,6 @@
 package com.billetterie.payment;
 
+import com.billetterie.payment.domain.CartType;
 import com.billetterie.payment.infrastructure.controller.PaymentController;
 import com.billetterie.payment.infrastructure.controller.dto.CartDto;
 import com.billetterie.payment.infrastructure.controller.dto.CreditCardDto;
@@ -31,6 +32,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
+import static com.billetterie.payment.domain.PaymentStatus.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
@@ -81,6 +83,11 @@ public class PaymentATest extends ATest {
         cartDto = new CartDto(panierId, amount);
     }
 
+    @Etantdonné("un panier réservé {string} de {int} euros")
+    public void unPanierRéservéDeEuros(String panierId, float amount) {
+        cartDto = new CartDto(panierId, amount, CartType.RESERVED);
+    }
+
     @Et("des information de paiement suivant numéro de carte {string}")
     public void desInformationDePaiementSuivantNuméroDeCarte(String cartNumber) {
         this.cartNumber = cartNumber;
@@ -112,7 +119,8 @@ public class PaymentATest extends ATest {
                 .body("amount", is(cartDto.amount()))
                 .body("id", is(nullValue()))
                 .body("transactionId", is(transactionId))
-                .body("redirectUrl", is("/bank/payments/3ds"));
+                .body("redirectUrl", is(String.format("/bank/payments/3ds?transactionId=%s&status=PENDING&cartId=%s&amount=%S&cartType=%s",
+                        transactionId, cartDto.id(), cartDto.amount(), cartDto.type().name().toLowerCase())));
     }
 
     @Etque("la banque valide le paiement {string} sans 3DS")
@@ -182,6 +190,30 @@ public class PaymentATest extends ATest {
         //@formatter:on
     }
 
+    @Alors("on est bien redirigé vers la page des commandes avec la commande {string} d'un montant de {float} euros avec une transaction bancaire {string}")
+    public void onEstBienRedirigéVersLaPageDesCommandes(String orderId, float amount, String transactionId) {
+        var paymentResultDto = response
+                .then()
+                .log().all()
+                .statusCode(200)
+                .body("status", is("SUCCESS"))
+                .body("id", is(orderId))
+                .body("amount", is(amount))
+                .body("transactionId", is(transactionId))
+                .body("redirectUrl", is("/my-orders?id=" + orderId + "&amount=" + amount))
+                .extract().as(PaymentResultDto.class);
+
+        String myOrdersUrl = paymentResultDto.redirectUrl();
+
+        RestAssured.basePath = "/";
+        //@formatter:off
+        response = RestAssured.given()
+                .log().all()
+        .when()
+                .get(myOrdersUrl);
+        //@formatter:on
+    }
+
     @Alors("on obtient une commande {string} d'un montant de {float} euros")
     public void onObtientUneCommandeDUnMontantDeEuros(String orderId, float amount) {
         String html = response
@@ -205,6 +237,37 @@ public class PaymentATest extends ATest {
                             <h1>Confirmation de commande</h1>
                             <div class="scenarios">
                                 <p>Votre commande a été confirmée avec succès.</p>
+                                <p>Numéro de la commande : <span>%s</span></p>
+                                <p>Montant : <span>%s</span> €</p>
+                            </div>
+                        </body>
+                        </html>
+                        """, orderId, amount));
+    }
+
+    @Et("on obtient une commande {string} d'un montant de {float} euros sur la page des commandes")
+    public void onObtientUneCommandeDUnMontantDeEurosSurLaPageDesCommandes(String orderId, float amount) {
+        String html = response
+                .then()
+                .log().all()
+                .statusCode(200)
+                .extract().asString();
+
+        assertThat(html)
+                .as("Confirmation HTML")
+                .isEqualTo(String.format("""
+                        <!DOCTYPE html>
+                        <html lang="fr" xmlns:sec="http://www.w3.org/1999/xhtml">
+                        <link rel="stylesheet" href="/css/billetterie.css">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <title>Mes Commandes</title>
+                        </head>
+                        <body>
+                            <h1>Mes Commandes</h1>
+                            <div class="scenarios">
+                                <p>Toutes vos commandes.</p>
                                 <p>Numéro de la commande : <span>%s</span></p>
                                 <p>Montant : <span>%s</span> €</p>
                             </div>
@@ -306,9 +369,9 @@ public class PaymentATest extends ATest {
                         {
                           "id": "%s",
                           "status": "PENDING",
-                          "redirectionUrl": "/bank/payments/3ds"
+                          "redirectionUrl": "/bank/payments/3ds?transactionId=%s&status=%s&cartId=%s&amount=%s"
                         }
-                        """, transactionId))));
+                        """, transactionId, transactionId, PENDING, cartDto.id(), cartDto.amount()))));
     }
 
     @Etque("la validation du paiement 3DS {string} est {string}")
@@ -328,9 +391,9 @@ public class PaymentATest extends ATest {
                         {
                           "id": "%s",
                           "status": "%s",
-                          "redirectionUrl": "/api/payment/cart/confirmation?transactionId=%s&status=ko&cartId=%s&amount=%s"
+                          "redirectionUrl": "/api/payment/cart/confirmation?transactionId=%s&status=ko&cartId=%s&amount=%s&cartType=%s"
                         }
-                        """, transactionId, status, transactionId, cartDto.id(), cartDto.amount()))));
+                        """, transactionId, status, transactionId, cartDto.id(), cartDto.amount(), cartDto.type().toString().toLowerCase()))));
     }
 
     @Quand("on revient sur la billetterie avec la transaction bancaire {string} avec le status 3DS {string}")
@@ -344,7 +407,9 @@ public class PaymentATest extends ATest {
                 .get("/cart/confirmation?transactionId=" + transactionId
                      + "&status=" + status
                      + "&cartId=" + cartDto.id()
-                     + "&amount=" + cartDto.amount());
+                     + "&amount=" + cartDto.amount()
+                     + "&cartType=" + cartDto.type()
+                );
         //@formatter:on
     }
 
@@ -376,6 +441,36 @@ public class PaymentATest extends ATest {
                         </body>
                         </html>
                         """, amount));
+    }
+
+    @Alors("on redirigé sur une page d'erreur pour le panier réservé {string} de {float} euros")
+    public void onEstRedirigéSurUnePAgeDErreurPourLePanierRéservéDeEuros(String cartId, float amount) {
+        var model = response
+                .then()
+                .log().all()
+                .statusCode(200)
+                .extract().asString();
+
+        assertThat(model)
+                .as("Html")
+                .isEqualTo(String.format("""
+                        <!DOCTYPE html>
+                        <html lang="fr" xmlns:sec="http://www.w3.org/1999/xhtml">
+                        <link rel="stylesheet" href="/css/billetterie.css">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <title>Panier reservé erreur</title>
+                        </head>
+                        <body>
+                            <h1>Panier reservé erreur</h1>
+                            <div class="scenarios">
+                                <span class="red">Une erreur est survenue lors du paiement de votre panier reservé :</span><span>%s</span>
+                                <p>Montant :<span>%s</span> €</p>
+                            </div>
+                        </body>
+                        </html>
+                        """, cartId, amount));
     }
 
     @Etque("on la transaction bancaire {string} n'est pas annulée")

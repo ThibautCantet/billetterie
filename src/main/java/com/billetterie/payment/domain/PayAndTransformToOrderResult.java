@@ -2,15 +2,17 @@ package com.billetterie.payment.domain;
 
 import static com.billetterie.payment.domain.PaymentStatus.*;
 
-public record PayAndTransformToOrderResult(PaymentStatus status, String transactionId, String redirectUrl, String orderId, Float amount) {
+public record PayAndTransformToOrderResult(PaymentStatus status, String transactionId, String redirectUrl, String orderId, Float amount,
+                                           CartType cartType) {
 
-    public static PayAndTransformToOrderResult pending(String transactionId, String redirectUrl, Float amount) {
+    public static PayAndTransformToOrderResult pending(String transactionId, String redirectUrl, Float amount, CartType type) {
         return new PayAndTransformToOrderResult(
                 PENDING,
                 transactionId,
-                redirectUrl,
+                redirectUrl + "&cartType=" + type.name().toLowerCase(),
                 null,
-                amount);
+                amount,
+                type);
     }
 
     public static PayAndTransformToOrderResult failed(String transactionId) {
@@ -19,7 +21,8 @@ public record PayAndTransformToOrderResult(PaymentStatus status, String transact
                 transactionId,
                 null,
                 null,
-                0f);
+                0f,
+                null);
     }
 
     public static PayAndTransformToOrderResult failed(String transactionId, String redirectUrl) {
@@ -28,15 +31,17 @@ public record PayAndTransformToOrderResult(PaymentStatus status, String transact
                 transactionId,
                 redirectUrl,
                 null,
-                0f);
+                0f,
+                null);
     }
 
-    public static PayAndTransformToOrderResult succeeded(String transactionId, String orderId, Float amount) {
+    public static PayAndTransformToOrderResult succeeded(String transactionId, String orderId, Float amount, CartType type, String url) {
         return new PayAndTransformToOrderResult(
                 PaymentStatus.SUCCESS,
                 transactionId,
-                String.format("/confirmation/%s?amount=%s", orderId, amount),
+                url,
                 orderId,
-                amount);
+                amount,
+                type);
     }
 }
