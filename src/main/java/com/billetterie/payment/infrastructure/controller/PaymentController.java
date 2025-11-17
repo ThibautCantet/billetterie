@@ -78,8 +78,13 @@ public class PaymentController {
         PaymentResultDto response;
         PayAndTransformToOrderResult result;
         var headers = new HttpHeaders();
+        String url;
+        if (type == CartType.CLASSIC) {
+            url = getErrorCartUrl(cartId, amount);
+        } else {
+            url = getErrorUrl(cartId, amount);
+        }
         if (status.equals("ko")) {
-            String url;
             if (type == CartType.CLASSIC) {
                 url = getErrorCartUrl(cartId, amount);
             } else {
@@ -90,7 +95,7 @@ public class PaymentController {
             result = transformToOrder.execute(transactionId, cartId, amount, type);
 
             if (result.status() == PaymentStatus.FAILED) {
-                response = redirectToCartOnError(amount, result.redirectUrl(), headers);
+                response = redirectToCartOnError(amount, url, headers);
             } else {
                 headers.setLocation(URI.create(result.redirectUrl()));
                 response = new PaymentResultDto(
