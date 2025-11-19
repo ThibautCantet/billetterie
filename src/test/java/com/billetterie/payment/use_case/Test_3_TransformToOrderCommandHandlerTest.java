@@ -43,7 +43,7 @@ public class Test_3_TransformToOrderCommandHandlerTest {
 
     @BeforeEach
     void setUp() {
-        transformToOrderCommandHandler = new TransformToOrderCommandHandler(orders);
+        transformToOrderCommandHandler = new TransformToOrderCommandHandler(orders, null, alertTransactionFailureCommandHandler);
     }
 
     @Nested
