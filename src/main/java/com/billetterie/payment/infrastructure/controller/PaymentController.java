@@ -5,8 +5,11 @@ import java.net.URI;
 import com.billetterie.payment.common.cqrs.application.CommandController;
 import com.billetterie.payment.common.cqrs.middleware.command.CommandBusFactory;
 import com.billetterie.payment.domain.CartType;
+import com.billetterie.payment.domain.ClassicOrderCreated;
+import com.billetterie.payment.domain.ClassicOrderNotCreated;
 import com.billetterie.payment.domain.OrderCreated;
-import com.billetterie.payment.domain.OrderNotCreated;
+import com.billetterie.payment.domain.PanierReserveCreated;
+import com.billetterie.payment.domain.PanierReserveNotCreated;
 import com.billetterie.payment.domain.PaymentStatus;
 import com.billetterie.payment.domain.ValidationRequested;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentDto;
@@ -68,8 +71,16 @@ public class PaymentController extends CommandController {
                 paymentDto.cartDto().type()));
 
         return switch (result.first()) {
-            case OrderCreated(
-                    PaymentStatus status, String transactionId, String redirectUrl, String orderId, float amount, CartType cartType
+            case ClassicOrderCreated(
+                    PaymentStatus status, String transactionId, String redirectUrl, String orderId, float amount
+            ) -> new PaymentResultDto(
+                    status,
+                    orderId,
+                    amount,
+                    transactionId,
+                    redirectUrl);
+            case PanierReserveCreated(
+                    PaymentStatus status, String transactionId, String redirectUrl, String orderId, float amount
             ) -> new PaymentResultDto(
                     status,
                     orderId,
@@ -113,22 +124,34 @@ public class PaymentController extends CommandController {
             //TODO: dispatch TransformToOrderCommand
             var result = transformToOrderCommandHandler.handle(new TransformToOrderCommand(transactionId, cartId, amount, type));
 
-            if (result.first() instanceof OrderNotCreated orderNotCreated) {
-                response = redirectToCartOnError(amount, url, headers);
-            } else if (result.first() instanceof OrderCreated orderCreated) {
-                headers.setLocation(URI.create(orderCreated.redirectUrl()));
-                response = new PaymentResultDto(
-                        SUCCESS,
-                        orderCreated.orderId(),
-                        orderCreated.amount(),
-                        orderCreated.transactionId(),
-                        orderCreated.redirectUrl());
-                LOGGER.info("Transaction succeeded, redirecting to confirmation page: {} {}", orderCreated.redirectUrl(), response);
-            } else {
-                response = redirectToCartOnError(amount, url, headers);
+            switch (result.first()) {
+                case ClassicOrderNotCreated orderNotCreated ->
+                        response = redirectToCartOnError(amount, orderNotCreated.redirectUrl(), headers);
+                case PanierReserveNotCreated orderNotCreated ->
+                        response = redirectToCartOnError(amount, orderNotCreated.redirectUrl(), headers);
+                case PanierReserveCreated panierReserveCreated -> {
+                    headers.setLocation(URI.create(panierReserveCreated.redirectUrl()));
+                    response = buildOrderCreatedResponse(panierReserveCreated);
+                    LOGGER.info("Transaction succeeded, redirecting to my orders page: {} {}", panierReserveCreated.redirectUrl(), response);
+                }
+                case ClassicOrderCreated classicOrderCreated -> {
+                    headers.setLocation(URI.create(classicOrderCreated.redirectUrl()));
+                    response = buildOrderCreatedResponse(classicOrderCreated);
+                    LOGGER.info("Transaction succeeded, redirecting to confirmation page: {} {}", classicOrderCreated.redirectUrl(), response);
+                }
+                case null, default -> response = redirectToCartOnError(amount, url, headers);
             }
         }
         return new ResponseEntity<>(response, headers, HttpStatusCode.valueOf(301));
+    }
+
+    private static PaymentResultDto buildOrderCreatedResponse(OrderCreated orderCreated) {
+        return new PaymentResultDto(
+                PaymentStatus.SUCCESS,
+                orderCreated.orderId(),
+                orderCreated.amount(),
+                orderCreated.transactionId(),
+                orderCreated.redirectUrl());
     }
 
     private static PaymentResultDto redirectToCartOnError(Float amount, String cartUrl, HttpHeaders headers) {
