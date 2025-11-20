@@ -1,5 +1,6 @@
 package com.billetterie.payment.use_case;
 
+import com.billetterie.payment.domain.ClassicOrderNotCreated;
 import com.billetterie.payment.domain.OrderNotCreated;
 import com.billetterie.payment.listener.OrderNotCreatedListener;
 import org.assertj.core.api.InstanceOfAssertFactories;
@@ -27,7 +28,7 @@ public class Test_4_OrderNotCreatedListenerTest {
 
     @Test
     void should_return_new_CancelTransactionCommand() {
-        var orderNotCreated = new OrderNotCreated(TRANSACTION_ID, AMOUNT, CART_ON_ERROR_URL, CART_ID);
+        var orderNotCreated = new ClassicOrderNotCreated(TRANSACTION_ID, AMOUNT, CART_ON_ERROR_URL, CART_ID);
 
         var command = orderNotCreatedListener.handle(orderNotCreated);
 
