@@ -5,6 +5,9 @@ import com.billetterie.payment.common.cqrs.command.CommandResponse;
 import com.billetterie.payment.common.cqrs.event.Event;
 import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.Payment;
+import com.billetterie.payment.domain.PaymentSucceeded;
+import com.billetterie.payment.domain.TransactionFailed;
+import com.billetterie.payment.domain.ValidationRequested;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -18,9 +21,12 @@ public class PayCommandHandler implements CommandHandler<PayCommand, CommandResp
     public CommandResponse<Event> handle(PayCommand command) {
         Payment payment = new Payment(command.cartId(), command.cardNumber(), command.expirationDate(), command.cypher(), command.amount());
         var transaction = bank.pay(payment);
-        //TODO: switch on transaction status and return
-        // ValidationRequested.of, TransactionFailed.of or PaymentSucceeded.of
-        return null;
+        if (transaction.isPending()) {
+            return new CommandResponse<>(ValidationRequested.of(transaction, command));
+        } else if (transaction.hasSucceeded()) {
+            return new CommandResponse<>(PaymentSucceeded.of(transaction, command));
+        }
+        return new CommandResponse<>(TransactionFailed.of(transaction.id()));
     }
 
     @Override

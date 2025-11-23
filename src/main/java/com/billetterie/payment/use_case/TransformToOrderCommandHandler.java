@@ -3,7 +3,6 @@ package com.billetterie.payment.use_case;
 import com.billetterie.payment.common.cqrs.command.CommandHandler;
 import com.billetterie.payment.common.cqrs.command.CommandResponse;
 import com.billetterie.payment.common.cqrs.event.Event;
-import com.billetterie.payment.domain.CancelTransactionFailed;
 import com.billetterie.payment.domain.CartType;
 import com.billetterie.payment.domain.ClassicOrderCreated;
 import com.billetterie.payment.domain.ClassicOrderNotCreated;
@@ -11,7 +10,6 @@ import com.billetterie.payment.domain.Order;
 import com.billetterie.payment.domain.Orders;
 import com.billetterie.payment.domain.PanierReserveCreated;
 import com.billetterie.payment.domain.PanierReserveNotCreated;
-import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -21,83 +19,40 @@ public class TransformToOrderCommandHandler implements CommandHandler<TransformT
     private static final Logger LOGGER = LoggerFactory.getLogger(TransformToOrderCommandHandler.class);
 
     private final Orders orders;
-    private final CancelTransactionCommandHandler cancelTransactionCommandHandler;
-    private final AlertTransactionFailureCommandHandler alertTransactionFailureCommandHandler;
 
-    public TransformToOrderCommandHandler(Orders orders, CancelTransactionCommandHandler cancelTransactionCommandHandler, AlertTransactionFailureCommandHandler alertTransactionFailureCommandHandler) {
+    public TransformToOrderCommandHandler(Orders orders) {
         this.orders = orders;
-        this.cancelTransactionCommandHandler = cancelTransactionCommandHandler;
-        this.alertTransactionFailureCommandHandler = alertTransactionFailureCommandHandler;
     }
 
     public CommandResponse<Event> handle(TransformToOrderCommand command) {
         Order order = orders.transformToOrder(command.cartId(), command.amount());
 
         if (order.isNotCompleted()) {
-            //TODO: remove cancelTransaction and alertTransactionFailure use cases
-            //TODO: register CancelTransaction, AlertTransactionFailure handlers
-            //TODO: register OrderNotCreatedListener and CancelTransactionFailedListener listeners
-            //TODO: dispatch TransformToOrderCommand in controller
             LOGGER.warn("Cart not transformed to order: {}", command.cartId());
-            var cancel = cancelTransactionCommandHandler.handle(new CancelTransactionCommand(command.transactionId(), command.cartId(), command.amount()));
-            if (cancel.events().stream().anyMatch(e -> e instanceof CancelTransactionFailed)) {
-                LOGGER.error("Transaction cancellation failed: {}", command.transactionId());
-                alertTransactionFailureCommandHandler.handle(new AlertTransactionFailureCommand(command.transactionId(), command.cartId(), command.amount()));
-            } else {
-                LOGGER.info("Transaction cancelled: {}", command.transactionId());
-            }
 
-            String errorUrl;
             if (command.cartType() == CartType.CLASSIC) {
-                errorUrl = getErrorCartUrl(command.cartId(), command.amount());
                 LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", command.cartId());
 
-                //TODO: replace payAndTransformToOrderResult by a ClassicOrderNotCreated.of event
-                var failed = PayAndTransformToOrderResult.failed(
-                        command.transactionId(),
-                        errorUrl);
-                return null;
+                var failed = ClassicOrderNotCreated.of(command.transactionId(), command.amount(), command.cartId());
+                return new CommandResponse<>(failed);
             } else {
-                errorUrl = getErrorUrl(command.cartId(), command.amount());
                 LOGGER.info("Panier reservé not transformed into order and redirect error: {}", command.cartId());
 
-                //TODO: replace payAndTransformToOrderResult by a PanierReserveNotCreated.of event
-                var failed = PayAndTransformToOrderResult.failed(
-                    command.transactionId(),
-                    errorUrl);
-                return null;
+                var failed = PanierReserveNotCreated.of(command.transactionId(), command.amount(), command.cartId());
+                return new CommandResponse<>(failed);
             }
         }
 
-        String url;
         if (command.cartType() == CartType.CLASSIC) {
-            url = String.format("/confirmation/%s?amount=%s", order.id(), command.amount());
-            //TODO: replace payAndTransformToOrderResult by a ClassicOrderCreated.of event
-            //TODO: use ClassicOrderCreated.of
-            //TODO: then remove the PayAndTransformToOrderResult record
             LOGGER.info("Cart transformed to order: {}", order.id());
-            PayAndTransformToOrderResult.succeeded(
-                    command.transactionId(),
-                    order.id(),
-                    command.amount(),
-                    command.cartType(),
-                    url);
+            var classicOrderCreated = ClassicOrderCreated.of(command, order.id());
 
-            return null;
+            return new CommandResponse<>(classicOrderCreated);
         } else {
-            url = String.format("/my-orders?id=%s&amount=%s", order.id(), command.amount());
             LOGGER.info("Panier réservé transformed to order: {}", order.id());
-            //TODO: replace payAndTransformToOrderResult by a PanierReserveCreated.of event
-            //TODO: use PanierReserveCreated.of
-            //TODO: then remove the PayAndTransformToOrderResult record
-            PayAndTransformToOrderResult.succeeded(
-                    command.transactionId(),
-                    order.id(),
-                    command.amount(),
-                    command.cartType(),
-                    url);
+            var panierReserveCreated = PanierReserveCreated.of(command, order.id());
 
-            return null;
+            return new CommandResponse<>(panierReserveCreated);
         }
     }
 
