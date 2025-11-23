@@ -6,8 +6,6 @@ import com.billetterie.payment.domain.ClassicOrderCreated;
 import com.billetterie.payment.domain.ClassicOrderNotCreated;
 import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Order;
-import com.billetterie.payment.domain.OrderCreated;
-import com.billetterie.payment.domain.OrderNotCreated;
 import com.billetterie.payment.domain.Orders;
 import com.billetterie.payment.domain.PanierReserveCreated;
 import com.billetterie.payment.domain.PanierReserveNotCreated;
@@ -47,7 +45,7 @@ public class Test_3_TransformToOrderCommandHandlerTest {
 
     @BeforeEach
     void setUp() {
-        transformToOrderCommandHandler = new TransformToOrderCommandHandler(orders, null, alertTransactionFailureCommandHandler);
+        transformToOrderCommandHandler = new TransformToOrderCommandHandler(orders);
     }
 
     @Nested

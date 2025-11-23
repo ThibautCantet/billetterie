@@ -10,6 +10,13 @@ import com.billetterie.payment.common.cqrs.middleware.event.EventBusFactory;
 import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Orders;
+import com.billetterie.payment.domain.PanierReserveCreated;
+import com.billetterie.payment.listener.CancelTransactionFailedListener;
+import com.billetterie.payment.listener.OrderNotCreatedListener;
+import com.billetterie.payment.listener.PaymentSucceededListener;
+import com.billetterie.payment.use_case.AlertTransactionFailureCommandHandler;
+import com.billetterie.payment.use_case.CancelTransactionCommandHandler;
+import com.billetterie.payment.use_case.PayCommandHandler;
 import com.billetterie.payment.use_case.TransformToOrderCommandHandler;
 import org.springframework.stereotype.Service;
 
@@ -29,13 +36,18 @@ public class CommandBusFactory {
 
     protected List<CommandHandler> getCommandHandlers() {
         return List.of(
-                //TODO: add Pay and TransformToOrder, CancelTransaction, AlertTransactionFailure handlers
+                new PayCommandHandler(bank),
+                new TransformToOrderCommandHandler(orders),
+                new CancelTransactionCommandHandler(bank),
+                new AlertTransactionFailureCommandHandler(customerSupport)
         );
     }
 
     protected List<EventHandler<? extends Event>> getEventHandlers() {
         return List.of(
-                //TODO: register PaymentSucceededListener register OrderNotCreatedListener and CancelTransactionFailedListener listeners
+                new PaymentSucceededListener(),
+                new OrderNotCreatedListener(),
+                new CancelTransactionFailedListener()
         );
     }
 
