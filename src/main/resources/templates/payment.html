@@ -29,11 +29,22 @@
 </div>
 <form>
     <label for="cartId">ID du Panier :</label>
-    <input type="text" id="cartId" name="cartId" required value="200">
+    <select name="cartId" id="cartId" required>
+        <option value="100200">panier id OK : 100200</option>
+        <option value="100400">panier id KO : 100400</option>
+    </select>
     <label for="amount">Montant (€) :</label>
-    <input type="number" id="amount" name="amount" step="0.01" required>
+    <select name="amount" id="amount" required>
+        <option value="50">montant sans 3DS : 100</option>
+        <option value="666">montant rejeté : 666</option>
+        <option value="200">montant 3DS : 200</option>
+        <option value="2000">montant 3DS non annulable : 2000</option>
+    </select>
     <label for="cardNumber">Numéro de la carte :</label>
-    <input type="text" id="cardNumber" name="cardNumber" step="0.01" required value="1234 5678 9012 3456">
+    <select name="cardNumber" id="cardNumber" required>
+        <option value="1234 5678 9012 3456">carte ok : 1234 5678 9012 3456</option>
+        <option value="1234 5678 9012 3500">carte ko : 1234 5678 9012 3500</option>
+    </select>
     <label for="expirationDate">Date d'expiration :</label>
     <input type="text" id="expirationDate" name="expirationDate" step="0.01" required value="10/2030">
     <label for="cypher">Cryptogramme :</label>
