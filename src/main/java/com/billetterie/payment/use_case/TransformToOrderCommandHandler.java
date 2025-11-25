@@ -5,10 +5,10 @@ import java.util.List;
 import com.billetterie.payment.common.cqrs.command.CommandHandler;
 import com.billetterie.payment.common.cqrs.command.CommandResponse;
 import com.billetterie.payment.common.cqrs.event.Event;
-import com.billetterie.payment.domain.CancelTransactionFailed;
 import com.billetterie.payment.domain.Order;
+import com.billetterie.payment.domain.OrderCreated;
+import com.billetterie.payment.domain.OrderNotCreated;
 import com.billetterie.payment.domain.Orders;
-import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -18,51 +18,34 @@ public class TransformToOrderCommandHandler implements CommandHandler<TransformT
     private static final Logger LOGGER = LoggerFactory.getLogger(TransformToOrderCommandHandler.class);
 
     private final Orders orders;
-    private final CancelTransactionCommandHandler cancelTransactionCommandHandler;
-    private final AlertTransactionFailureCommandHandler alertTransactionFailureCommandHandler;
 
-    public TransformToOrderCommandHandler(Orders orders, CancelTransactionCommandHandler cancelTransactionCommandHandler, AlertTransactionFailureCommandHandler alertTransactionFailureCommandHandler) {
+    public TransformToOrderCommandHandler(Orders orders) {
         this.orders = orders;
-        this.cancelTransactionCommandHandler = cancelTransactionCommandHandler;
-        this.alertTransactionFailureCommandHandler = alertTransactionFailureCommandHandler;
     }
 
     public CommandResponse<Event> handle(TransformToOrderCommand command) {
         Order order = orders.transformToOrder(command.cartId(), command.amount());
 
         if (order.isNotCompleted()) {
-            //TODO: remove cancelTransaction and alertTransactionFailure use cases
-            //TODO: register CancelTransaction, AlertTransactionFailure handlers
-            //TODO: register OrderNotCreatedListener and CancelTransactionFailedListener listeners
-            //TODO: dispatch TransformToOrderCommand in controller
             LOGGER.warn("Cart not transformed to order: {}", command.cartId());
-            var cancel = cancelTransactionCommandHandler.handle(new CancelTransactionCommand(command.transactionId(), command.cartId(), command.amount()));
-            if (cancel.events().stream().anyMatch(e -> e instanceof CancelTransactionFailed)) {
-                LOGGER.error("Transaction cancellation failed: {}", command.transactionId());
-                alertTransactionFailureCommandHandler.handle(new AlertTransactionFailureCommand(command.transactionId(), command.cartId(), command.amount()));
-            } else {
-                LOGGER.info("Transaction cancelled: {}", command.transactionId());
-            }
 
-            //TODO: replace payAndTransformToOrderResult by a OrderNotCreated event
-            var failed = PayAndTransformToOrderResult.failed(
+            var failed = new OrderNotCreated(
                     command.transactionId(),
-                    getErrorCartUrl(command.cartId(), command.amount()));
+                    command.amount(),
+                    getErrorCartUrl(command.cartId(), command.amount()),
+                    command.cartId());
             LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", failed);
 
-            return new CommandResponse<>(List.of());
+            return new CommandResponse<>(failed);
         }
 
         LOGGER.info("Cart transformed to order: {}", order.id());
-        //TODO: replace payAndTransformToOrderResult by a OrderCreated event
-        //TODO: use OrderCreated.of
-        //TODO: then remove the PayAndTransformToOrderResult record
-        PayAndTransformToOrderResult.succeeded(
+        var created = OrderCreated.of(
                 command.transactionId(),
                 order.id(),
                 command.amount());
 
-        return new CommandResponse<>(List.of());
+        return new CommandResponse<>(created);
     }
 
     @Override

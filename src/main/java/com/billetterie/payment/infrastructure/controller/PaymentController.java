@@ -11,9 +11,7 @@ import com.billetterie.payment.domain.ValidationRequested;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentDto;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentResultDto;
 import com.billetterie.payment.use_case.PayCommand;
-import com.billetterie.payment.use_case.PayCommandHandler;
 import com.billetterie.payment.use_case.TransformToOrderCommand;
-import com.billetterie.payment.use_case.TransformToOrderCommandHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,14 +35,9 @@ public class PaymentController extends CommandController {
     private static final Logger LOGGER = LoggerFactory.getLogger(PaymentController.class);
 
     public static final String PATH = "/api/payment";
-    private final PayCommandHandler payCommandHandler;
-    private final TransformToOrderCommandHandler transformToOrderCommandHandler;
 
-    //TODO: replace PayAndTransformToOrder by a command bus factory and call super(commandBusFactory)
-    public PaymentController(CommandBusFactory factory, PayCommandHandler payCommandHandler, TransformToOrderCommandHandler transformToOrderCommandHandler) {
+    public PaymentController(CommandBusFactory factory) {
         super(factory);
-        this.payCommandHandler = payCommandHandler;
-        this.transformToOrderCommandHandler = transformToOrderCommandHandler;
     }
 
     /**
@@ -55,8 +48,7 @@ public class PaymentController extends CommandController {
      */
     @PostMapping
     public PaymentResultDto processPayment(@RequestBody PaymentDto paymentDto) {
-        //TODO: replace use case by a command bus factory to dispatch PayCommand
-        var result = payCommandHandler.handle(
+        var result = getCommandBus().dispatch(
                 new PayCommand(
                 paymentDto.cartDto().id(),
                 paymentDto.creditCardDto().number(),
@@ -95,8 +87,7 @@ public class PaymentController extends CommandController {
         if (status.equals("ko")) {
             response = redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
         } else {
-            //TODO: dispatch TransformToOrderCommand
-            var result = transformToOrderCommandHandler.handle(new TransformToOrderCommand(transactionId, cartId, amount));
+            var result = getCommandBus().dispatch(new TransformToOrderCommand(transactionId, cartId, amount));
 
             if (result.first() instanceof OrderNotCreated orderNotCreated) {
                 response = redirectToCartOnError(amount, orderNotCreated.redirectUrl(), headers);
