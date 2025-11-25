@@ -35,7 +35,8 @@ public class CommandBusFactory {
 
     protected List<EventHandler<? extends Event>> getEventHandlers() {
         return List.of(
-                //TODO: register PaymentSucceededListener register OrderNotCreatedListener and CancelTransactionFailedListener listeners
+                //TODO: register PaymentSucceededListener register OrderNotCreatedListener
+                // and CancelTransactionFailedListener listeners
         );
     }
 

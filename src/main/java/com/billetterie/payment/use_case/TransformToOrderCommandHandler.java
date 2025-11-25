@@ -1,5 +1,7 @@
 package com.billetterie.payment.use_case;
 
+import java.util.List;
+
 import com.billetterie.payment.common.cqrs.command.CommandHandler;
 import com.billetterie.payment.common.cqrs.command.CommandResponse;
 import com.billetterie.payment.common.cqrs.event.Event;
@@ -48,7 +50,7 @@ public class TransformToOrderCommandHandler implements CommandHandler<TransformT
                     getErrorCartUrl(command.cartId(), command.amount()));
             LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", failed);
 
-            return null;
+            return new CommandResponse<>(List.of());
         }
 
         LOGGER.info("Cart transformed to order: {}", order.id());
@@ -60,7 +62,7 @@ public class TransformToOrderCommandHandler implements CommandHandler<TransformT
                 order.id(),
                 command.amount());
 
-        return null;
+        return new CommandResponse<>(List.of());
     }
 
     @Override
