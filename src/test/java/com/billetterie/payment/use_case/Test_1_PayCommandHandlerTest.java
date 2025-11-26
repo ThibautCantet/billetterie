@@ -32,9 +32,12 @@ public class Test_1_PayCommandHandlerTest {
     @Mock
     private Bank bank;
 
+    @Mock
+    private TransformToOrderCommandHandler transformToOrderCommandHandler;
+
     @BeforeEach
     void setUp() {
-        payCommandHandler = new PayCommandHandler(bank);
+        payCommandHandler = new PayCommandHandler(bank, transformToOrderCommandHandler);
     }
 
     @Nested
