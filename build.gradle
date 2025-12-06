@@ -56,17 +56,13 @@ configurations {
 	}
 }
 
-tasks.register('cucumberCli') {
+tasks.register('cucumberCli', JavaExec) {
 	dependsOn assemble, testClasses
-	doLast {
-		javaexec {
-			mainClass.set("io.cucumber.core.cli.Main")
-			classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
-			args = [
-							'--plugin', 'pretty',
-							'--plugin', 'html:build/target/cucumber-report.html',
-							'--glue', 'com.billetterie',
-							'src/test/resources']
-		}
-	}
+	mainClass.set("io.cucumber.core.cli.Main")
+	classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
+	args = [
+					'--plugin', 'pretty',
+					'--plugin', 'html:build/target/cucumber-report.html',
+					'--glue', 'com.billetterie',
+					'src/test/resources']
 }
