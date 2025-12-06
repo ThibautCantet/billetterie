@@ -42,14 +42,6 @@ To run the tests, use the following command:
 ./gradlew :cucumberCli
 ```
 
-
-## Run the database
-To run the database, use the following command:
-
-```bash
-docker-compose up -d
-```
-
 ### Reference Documentation
 For further reference, please consider the following sections:
 
