@@ -2,12 +2,14 @@ package com.billetterie.payment.infrastructure.controller;
 
 import java.net.URI;
 
+import com.billetterie.payment.common.cqrs.application.CommandController;
+import com.billetterie.payment.common.cqrs.middleware.command.CommandBusFactory;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import com.billetterie.payment.domain.PaymentStatus;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentDto;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentResultDto;
-import com.billetterie.payment.use_case.PayAndTransformToOrder;
-import com.billetterie.payment.use_case.TransformToOrder;
+import com.billetterie.payment.orchestration.PayAndTransformToOrder;
+import com.billetterie.payment.orchestration.TransformToOrder;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,19 +24,19 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import static com.billetterie.payment.domain.PaymentStatus.*;
-import static com.billetterie.payment.use_case.TransformToOrder.*;
 
 @RestController
 @RequestMapping(PaymentController.PATH)
 @Slf4j
-public class PaymentController {
+public class PaymentController extends CommandController {
     private static final Logger LOGGER = LoggerFactory.getLogger(PaymentController.class);
 
     public static final String PATH = "/api/payment";
     private final PayAndTransformToOrder payAndTransformToOrder;
     private final TransformToOrder transformToOrder;
 
-    public PaymentController(PayAndTransformToOrder payAndTransformToOrder, TransformToOrder transformToOrder) {
+    public PaymentController(CommandBusFactory commandBusFactory, PayAndTransformToOrder payAndTransformToOrder, TransformToOrder transformToOrder) {
+        super(commandBusFactory);
         this.payAndTransformToOrder = payAndTransformToOrder;
         this.transformToOrder = transformToOrder;
     }
@@ -68,7 +70,7 @@ public class PaymentController {
     }
 
     @GetMapping("/cart/confirmation")
-    public ResponseEntity bankCallback(
+    public ResponseEntity<PaymentResultDto> bankCallback(
             @RequestParam(name = "transactionId") String transactionId,
             @RequestParam(name = "status") String status,
             @RequestParam(name = "cartId") String cartId,
@@ -104,5 +106,9 @@ public class PaymentController {
 
         LOGGER.error("Transaction failed, redirecting to cart with error: {} {}", cartUrl, response);
         return response;
+    }
+
+    private static String getErrorCartUrl(String cartId, float amount) {
+        return "/cart?error=true&cartId=" + cartId + "&amount=" + amount;
     }
 }

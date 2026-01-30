@@ -265,3 +265,50 @@ sequenceDiagram
 | `transactionId` | String | ID transaction bancaire |
 | `redirectUrl` | String | URL de redirection |
 
+
+---
+
+## Événements & chorégraphie
+
+L'application utilise un pattern chorégraphié : les handlers de commandes émettent des événements, puis des listeners (enregistrés dans un `EventBus`) convertissent ces événements en nouvelles commandes qui sont renvoyées au `CommandBus`. Il n'y a pas d'orchestrateur central : la logique est répartie par événements.
+
+Principaux événements produits par les use-cases / handlers :
+
+- `PaymentSucceeded` : émis quand le paiement auprès de la `Bank` est confirmé (ou en cas de succès immédiat). Contient `transactionId`, `cartId`, `amount`, `email`.
+- `ValidationRequested` : émis quand la banque demande une validation 3DS (status PENDING). Contient `transactionId`, `redirectUrl`, `amount`.
+- `OrderCreated` : émis quand la transformation du panier en commande aboutit (contient `orderId`, `transactionId`, `amount`, `email`).
+- `OrderNotCreated` : émis quand la transformation en commande échoue (contient `transactionId`, `cartId`, `amount`, `redirectUrl`).
+- `CancelTransactionFailed` : émis si l'annulation auprès de la banque échoue après un `OrderNotCreated`.
+
+Listeners (exemples) et comportement attendu :
+
+- `PaymentSucceededListener` écoute `PaymentSucceeded` et retourne une `TransformToOrderCommand` (lance la transformation panier→commande).
+- `TransformToOrderSucceededListener` écoute `TransformToOrderSucceeded` (ou utilise `OrderCreated`) et retourne une `SendConfirmationEmailCommand`.
+- `OrderNotCreatedListener` écoute `OrderNotCreated` et retourne une `CancelTransactionCommand`.
+- `CancelTransactionFailedListener` écoute `CancelTransactionFailed` et retourne une `AlertTransactionFailureCommand` (avertir support client).
+
+Conséquence : les actions asynchrones (envois d'email, annulations, alertes) sont déclenchées par événement sans coupler directement les use-cases.
+
+### Diagramme de la chorégraphie (graphe simplifié)
+
+```mermaid
+flowchart LR
+  Commands[Commands] -->|PayCommand| PayHandler[PayCommandHandler]
+  PayHandler -->|emits PaymentSucceeded / ValidationRequested| EventBus
+
+  EventBus --> PaymentSucceededListener
+  PaymentSucceededListener -->|creates TransformToOrderCommand| TransformToOrderHandler[TransformToOrderCommandHandler]
+  TransformToOrderHandler -->|emits OrderCreated| EventBus
+  EventBus --> TransformToOrderSucceededListener
+  TransformToOrderSucceededListener -->|creates SendConfirmationEmailCommand| SendConfirmationEmailHandler[SendConfirmationEmailCommandHandler]
+  SendConfirmationEmailHandler --> ConfirmationService
+
+  TransformToOrderHandler -->|emits OrderNotCreated| EventBus
+  EventBus --> OrderNotCreatedListener
+  OrderNotCreatedListener -->|creates CancelTransactionCommand| CancelTransactionHandler[CancelTransactionCommandHandler]
+  CancelTransactionHandler --> Bank
+  CancelTransactionHandler -->|on failure emits| CancelTransactionFailed
+  EventBus --> CancelTransactionFailedListener
+  CancelTransactionFailedListener -->|creates AlertTransactionFailureCommand| AlertTransactionHandler[AlertTransactionFailureCommandHandler]
+  AlertTransactionHandler --> CustomerSupport
+```

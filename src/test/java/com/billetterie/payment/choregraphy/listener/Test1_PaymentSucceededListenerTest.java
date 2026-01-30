@@ -1,0 +1,47 @@
+package com.billetterie.payment.choregraphy.listener;
+
+import com.billetterie.payment.domain.PaymentStatus;
+import com.billetterie.payment.domain.PaymentSucceeded;
+import com.billetterie.payment.choregraphy.handler.TransformToOrderCommand;
+import org.assertj.core.api.InstanceOfAssertFactories;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.assertj.core.api.Assertions.*;
+
+
+@ExtendWith(MockitoExtension.class)
+class Test1_PaymentSucceededListenerTest {
+
+    private PaymentSucceededListener paymentSucceededListener;
+
+    @BeforeEach
+    void setUp() {
+        paymentSucceededListener = new PaymentSucceededListener();
+    }
+
+    @Test
+    void should_return_new_TransformToOrderCommand() {
+        var paymentSucceeded = new PaymentSucceeded(PaymentStatus.SUCCESS, "tx123", "cart123", 100.0f, "client@mail.com");
+
+        var command = paymentSucceededListener.handle(paymentSucceeded);
+
+        assertThat(command)
+                .isExactlyInstanceOf(TransformToOrderCommand.class)
+                .asInstanceOf(InstanceOfAssertFactories.type(TransformToOrderCommand.class))
+                .extracting(TransformToOrderCommand::transactionId,
+                            TransformToOrderCommand::cartId,
+                            TransformToOrderCommand::amount,
+                            TransformToOrderCommand::email)
+                .containsExactly("tx123", "cart123", 100.0f, "client@mail.com");
+    }
+
+    @Test
+    void should_return_PaymentSucceeded() {
+        var listenTo = paymentSucceededListener.listenTo();
+
+        assertThat(listenTo).isEqualTo(PaymentSucceeded.class);
+    }
+}
