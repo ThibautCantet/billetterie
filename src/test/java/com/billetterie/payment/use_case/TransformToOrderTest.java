@@ -2,6 +2,7 @@ package com.billetterie.payment.use_case;
 
 import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.CustomerSupport;
+import com.billetterie.payment.domain.ConfirmationService;
 import com.billetterie.payment.domain.Order;
 import com.billetterie.payment.domain.Orders;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
@@ -21,6 +22,7 @@ public class TransformToOrderTest {
     private static final String CART_ID = "123456";
     private static final String ORDER_ID = "654654";
     private static final float AMOUNT = 100.0f;
+    private static final String EMAIL = "client@mail.com";
     private static final String TRANSACTION_ID = "324234243234";
 
     @InjectMocks
@@ -33,6 +35,8 @@ public class TransformToOrderTest {
     private Bank bank;
     @Mock
     private CustomerSupport customerSupport;
+    @Mock
+    private ConfirmationService confirmationService;
 
     @Test
     void should_return_ok_when_transform_to_order_succeeds() {
@@ -41,7 +45,7 @@ public class TransformToOrderTest {
         when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
 
         // when
-        var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT);
+        var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT, EMAIL);
 
         // then
         assertThat(result).extracting(PayAndTransformToOrderResult::status,
@@ -50,6 +54,8 @@ public class TransformToOrderTest {
                 PayAndTransformToOrderResult::redirectUrl,
                 PayAndTransformToOrderResult::amount)
                 .containsExactly(SUCCESS, TRANSACTION_ID, ORDER_ID, "/confirmation/654654?amount=100.0", AMOUNT);
+
+        verify(confirmationService).send(EMAIL, ORDER_ID, AMOUNT);
     }
 
     @Test
@@ -61,7 +67,7 @@ public class TransformToOrderTest {
         when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(true);
 
         // when
-        var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT);
+        var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT, EMAIL);
 
         // then
         assertThat(result).extracting(PayAndTransformToOrderResult::status,
@@ -74,6 +80,8 @@ public class TransformToOrderTest {
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
         verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
+
+        verify(confirmationService, never()).send(any(), any(), anyFloat());
     }
 
     @Test
@@ -85,7 +93,7 @@ public class TransformToOrderTest {
         when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(false);
 
         // when
-        var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT);
+        var result = transformToOrder.execute(TRANSACTION_ID, CART_ID, AMOUNT, EMAIL);
 
         // then
         assertThat(result).extracting(PayAndTransformToOrderResult::status,
@@ -98,6 +106,8 @@ public class TransformToOrderTest {
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
         verify(customerSupport).alertTransactionFailure(TRANSACTION_ID, CART_ID, AMOUNT);
+
+        verify(confirmationService, never()).send(any(), any(), anyFloat());
     }
 
 }

@@ -52,6 +52,7 @@ public class PaymentATest extends ATest {
     private CartDto cartDto;
     private String cartNumber;
     private CreditCardDto creditCardDto;
+    private String email;
 
     private final WireMockConfiguration port = options().port(PORT);
     private final WireMockServer wireMockServer = new WireMockServer(port);
@@ -76,9 +77,10 @@ public class PaymentATest extends ATest {
         RestAssured.basePath = PaymentController.PATH;
     }
 
-    @Etantdonné("un panier {string} de {float} euros")
-    public void unPanierDeEuros(String panierId, float amount) {
+    @Etantdonné("un panier {string} de {float} euros pour {string}")
+    public void unPanierDeEuros(String panierId, float amount, String email) {
         cartDto = new CartDto(panierId, amount);
+        this.email = email;
     }
 
     @Et("des information de paiement suivant numéro de carte {string}")
@@ -97,7 +99,7 @@ public class PaymentATest extends ATest {
         response = RestAssured.given()
                 .log().all()
                 .header("Content-Type", ContentType.JSON)
-                .body(new PaymentDto(cartDto, creditCardDto))
+                .body(new PaymentDto(email, cartDto, creditCardDto))
         .when()
                 .post("");
         //@formatter:on
@@ -125,9 +127,10 @@ public class PaymentATest extends ATest {
                             "expirationDate": "%s",
                             "cypher": "%s",
                             "cartId": "%s",
-                            "amount": "%s"
+                            "amount": "%s",
+                            "email": "%s"
                         }
-                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount())))
+                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount(), email)))
                 .willReturn(okJson(String.format("""
                         {
                           "id": "%s",
@@ -176,7 +179,7 @@ public class PaymentATest extends ATest {
         response = RestAssured.given()
                 .log().all()
                 .header("Content-Type", ContentType.JSON)
-                .body(new PaymentDto(cartDto, creditCardDto))
+                .body(new PaymentDto(email, cartDto, creditCardDto))
         .when()
                 .get(confirmationUrl);
         //@formatter:on
@@ -223,9 +226,10 @@ public class PaymentATest extends ATest {
                             "expirationDate": "%s",
                             "cypher": "%s",
                             "cartId": "%s",
-                            "amount": "%s"
+                            "amount": "%s",
+                            "email": "%s"
                         }
-                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount())))
+                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount(), email)))
                 .willReturn(okJson(String.format("""
                         {
                           "id": "%s",
@@ -299,9 +303,10 @@ public class PaymentATest extends ATest {
                             "expirationDate": "%s",
                             "cypher": "%s",
                             "cartId": "%s",
-                            "amount": "%s"
+                            "amount": "%s",
+                            "email": "%s"
                         }
-                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount())))
+                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount(), email)))
                 .willReturn(okJson(String.format("""
                         {
                           "id": "%s",
@@ -321,9 +326,10 @@ public class PaymentATest extends ATest {
                             "expirationDate": "%s",
                             "cypher": "%s",
                             "cartId": "%s",
-                            "amount": "%s"
+                            "amount": "%s",
+                            "email": "%s"
                         }
-                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount())))
+                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount(), email)))
                 .willReturn(okJson(String.format("""
                         {
                           "id": "%s",
@@ -339,12 +345,14 @@ public class PaymentATest extends ATest {
         response = RestAssured.given()
                 .log().all()
                 .header("Content-Type", ContentType.JSON)
-                .body(new PaymentDto(cartDto, creditCardDto))
+                .body(new PaymentDto(email, cartDto, creditCardDto))
         .when()
                 .get("/cart/confirmation?transactionId=" + transactionId
                      + "&status=" + status
                      + "&cartId=" + cartDto.id()
-                     + "&amount=" + cartDto.amount());
+                     + "&amount=" + cartDto.amount()
+                     + "&email=" + email
+                );
         //@formatter:on
     }
 

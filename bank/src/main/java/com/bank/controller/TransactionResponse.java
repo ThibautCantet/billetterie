@@ -33,11 +33,12 @@ public record TransactionResponse(String id, String status, String redirectionUr
         }
         var transaction = new TransactionResponse(transactionId,
                 "PENDING",
-                String.format("http://localhost:8082/payments/3ds?transactionId=%s&status=%s&cartId=%s&amount=%s",
+                String.format("http://localhost:8082/payments/3ds?transactionId=%s&status=%s&cartId=%s&amount=%s&email=%s",
                         transactionId,
                         "ok",
                         request.cartId(),
-                        request.amount()));
+                        request.amount(),
+                        request.email()));
         LOGGER.info("Transaction pending {}", transaction);
         return transaction;
     }

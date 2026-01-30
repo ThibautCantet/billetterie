@@ -47,6 +47,7 @@ label {
 }
 
 input[type="text"],
+input[type="email"],
 input[type="number"],
 select {
     padding: 8px 10px;

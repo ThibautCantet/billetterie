@@ -2,15 +2,23 @@ package com.billetterie.payment.domain;
 
 import static com.billetterie.payment.domain.PaymentStatus.*;
 
-public record PayAndTransformToOrderResult(PaymentStatus status, String transactionId, String redirectUrl, String orderId, Float amount) {
+public record PayAndTransformToOrderResult(
+        PaymentStatus status,
+        String transactionId,
+        String redirectUrl,
+        String orderId,
+        Float amount,
+        String email
+) {
 
-    public static PayAndTransformToOrderResult pending(String transactionId, String redirectUrl, Float amount) {
+    public static PayAndTransformToOrderResult pending(String transactionId, String redirectUrl, Float amount, String email) {
         return new PayAndTransformToOrderResult(
                 PENDING,
                 transactionId,
                 redirectUrl,
                 null,
-                amount);
+                amount,
+                email);
     }
 
     public static PayAndTransformToOrderResult failed(String transactionId) {
@@ -19,7 +27,8 @@ public record PayAndTransformToOrderResult(PaymentStatus status, String transact
                 transactionId,
                 null,
                 null,
-                0f);
+                0f,
+                null);
     }
 
     public static PayAndTransformToOrderResult failed(String transactionId, String redirectUrl) {
@@ -28,7 +37,8 @@ public record PayAndTransformToOrderResult(PaymentStatus status, String transact
                 transactionId,
                 redirectUrl,
                 null,
-                0f);
+                0f,
+                null);
     }
 
     public static PayAndTransformToOrderResult succeeded(String transactionId, String orderId, Float amount) {
@@ -37,6 +47,7 @@ public record PayAndTransformToOrderResult(PaymentStatus status, String transact
                 transactionId,
                 String.format("/confirmation/%s?amount=%s", orderId, amount),
                 orderId,
-                amount);
+                amount,
+                null);
     }
 }
