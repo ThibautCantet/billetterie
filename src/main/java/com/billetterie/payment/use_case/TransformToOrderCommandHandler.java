@@ -1,8 +1,11 @@
 package com.billetterie.payment.use_case;
 
+import com.billetterie.payment.common.cqrs.command.CommandHandler;
+import com.billetterie.payment.common.cqrs.command.CommandResponse;
+import com.billetterie.payment.common.cqrs.event.Event;
 import com.billetterie.payment.domain.Bank;
-import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.ConfirmationService;
+import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Order;
 import com.billetterie.payment.domain.Orders;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
@@ -11,22 +14,22 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
-public class TransformToOrder {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TransformToOrder.class);
+public class TransformToOrderCommandHandler implements CommandHandler<TransformToOrderCommand, CommandResponse<Event>> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TransformToOrderCommandHandler.class);
 
     private final Orders orders;
     private final Bank bank;
     private final CustomerSupport customerSupport;
     private final ConfirmationService confirmationService;
 
-    public TransformToOrder(Orders orders, Bank bank, CustomerSupport customerSupport, ConfirmationService confirmationService) {
+    public TransformToOrderCommandHandler(Orders orders, Bank bank, CustomerSupport customerSupport, ConfirmationService confirmationService) {
         this.orders = orders;
         this.bank = bank;
         this.customerSupport = customerSupport;
         this.confirmationService = confirmationService;
     }
 
-    public PayAndTransformToOrderResult execute(String transactionId, String cartId, float amount, String email) {
+    public PayAndTransformToOrderResult handle(String transactionId, String cartId, float amount, String email) {
         Order order = orders.transformToOrder(cartId, amount);
 
         if (order.isNotCompleted()) {
@@ -41,6 +44,7 @@ public class TransformToOrder {
                 LOGGER.info("Transaction cancelled: {}", transactionId);
             }
 
+            //TODO: replace payAndTransformToOrderResult by a OrderNotCreated event
             var failed = PayAndTransformToOrderResult.failed(
                     transactionId,
                     getErrorCartUrl(cartId, amount));
@@ -52,10 +56,24 @@ public class TransformToOrder {
         confirmationService.send(email, order.id(), order.amount());
 
         LOGGER.info("Cart transformed to order: {}", order.id());
-        return PayAndTransformToOrderResult.succeeded(
+        //TODO: replace payAndTransformToOrderResult by a OrderCreated event
+        //TODO: use OrderCreated.of
+        PayAndTransformToOrderResult.succeeded(
                 transactionId,
                 order.id(),
                 amount);
+
+        return null;
+    }
+
+    @Override
+    public CommandResponse<Event> handle(TransformToOrderCommand command) {
+        return null;
+    }
+
+    @Override
+    public Class listenTo() {
+        return TransformToOrderCommand.class;
     }
 
     public static String getErrorCartUrl(String cartId, float amount) {

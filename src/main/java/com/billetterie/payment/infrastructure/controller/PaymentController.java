@@ -27,6 +27,7 @@ import static com.billetterie.payment.use_case.TransformToOrder.*;
 @RestController
 @RequestMapping(PaymentController.PATH)
 @Slf4j
+//TODO: étendre de CommandController
 public class PaymentController {
     private static final Logger LOGGER = LoggerFactory.getLogger(PaymentController.class);
 
@@ -34,6 +35,7 @@ public class PaymentController {
     private final PayAndTransformToOrder payAndTransformToOrder;
     private final TransformToOrder transformToOrder;
 
+    //TODO: replace PayAndTransformToOrder by a command bus factory and call super(commandBusFactory)
     public PaymentController(PayAndTransformToOrder payAndTransformToOrder, TransformToOrder transformToOrder) {
         this.payAndTransformToOrder = payAndTransformToOrder;
         this.transformToOrder = transformToOrder;
@@ -47,6 +49,8 @@ public class PaymentController {
      */
     @PostMapping
     public PaymentResultDto processPayment(@RequestBody PaymentDto paymentDto) {
+        //TODO: remplacer l'appel au use case par un appel à une command bus factory pour dispatcher PayCommand
+        // getCommandBus.dispatch(command)
         PayAndTransformToOrderResult result = payAndTransformToOrder.execute(
                 paymentDto.cartDto().id(),
                 paymentDto.creditCardDto().number(),
@@ -54,7 +58,8 @@ public class PaymentController {
                 paymentDto.creditCardDto().cypher(),
                 paymentDto.cartDto().amount(),
                 paymentDto.email());
-
+        //TODO: remplacer par un switch sur le type d'event : OrderCreated ou ValidationRequested ou TransactionFailed
+        // afin de retourner un PaymentResultDto contenant les bonnes valeurs
         if (result.status() == FAILED) {
             return new PaymentResultDto(result.status());
         }
@@ -80,8 +85,12 @@ public class PaymentController {
         if (status.equals("ko")) {
             response = redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
         } else {
+            //TODO: dispatcher une command TransformToOrderCommand
             result = transformToOrder.execute(transactionId, cartId, amount, email);
 
+            //TODO: remplacer pour un switch sur le type d'event : OrderNotCreated ou OrderCreated
+            // afin de retourner une instance de PaymentResultDto avec les bonnes valeurs
+            // par défaut initialiser response à redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
             if (result.status() == PaymentStatus.FAILED) {
                 response = redirectToCartOnError(amount, result.redirectUrl(), headers);
             } else {
