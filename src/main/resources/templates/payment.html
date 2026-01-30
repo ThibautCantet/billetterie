@@ -28,6 +28,8 @@
         transaction : <span class="red">montant > 1000€</span></p>
 </div>
 <form>
+    <label for="email">Email :</label>
+    <input type="email" id="email" name="email" required value="client@mail.com">
     <label for="cartId">ID du Panier :</label>
     <select name="cartId" id="cartId" required>
         <option value="100200">panier id OK : 100200</option>
@@ -59,8 +61,10 @@
         const cardNumber = document.getElementById('cardNumber').value;
         const expirationDate = document.getElementById('expirationDate').value;
         const cypher = document.getElementById('cypher').value;
+        const email = document.getElementById('email').value;
 
         const paymentData = {
+            email: email,
             cartDto: {id: cartId, amount: parseFloat(amount)},
             creditCardDto: {number: cardNumber, expirationDate: expirationDate, cypher: cypher}
         };
@@ -72,6 +76,7 @@
                 body: JSON.stringify(paymentData)
             });
 
+            debugger;
             if (response.ok) {
                 const result = await response.json();
                 if (result.redirectUrl) {

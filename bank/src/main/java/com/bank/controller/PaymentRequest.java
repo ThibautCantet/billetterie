@@ -5,7 +5,8 @@ public record PaymentRequest(
         String expirationDate,
         String cypher,
         String cartId,
-        String amount
+        String amount,
+        String email
 ) {
     private static final Float NO_VALIDATION_REQUIRED = 100f;
     private static final float NOT_CANCELABLE_TRANSACTION_AMOUNT = 1000f;

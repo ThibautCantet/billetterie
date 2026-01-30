@@ -2,6 +2,7 @@ package com.billetterie.payment.use_case;
 
 import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.CustomerSupport;
+import com.billetterie.payment.domain.ConfirmationService;
 import com.billetterie.payment.domain.Order;
 import com.billetterie.payment.domain.Orders;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
@@ -16,14 +17,16 @@ public class TransformToOrder {
     private final Orders orders;
     private final Bank bank;
     private final CustomerSupport customerSupport;
+    private final ConfirmationService confirmationService;
 
-    public TransformToOrder(Orders orders, Bank bank, CustomerSupport customerSupport) {
+    public TransformToOrder(Orders orders, Bank bank, CustomerSupport customerSupport, ConfirmationService confirmationService) {
         this.orders = orders;
         this.bank = bank;
         this.customerSupport = customerSupport;
+        this.confirmationService = confirmationService;
     }
 
-    public PayAndTransformToOrderResult execute(String transactionId, String cartId, float amount) {
+    public PayAndTransformToOrderResult execute(String transactionId, String cartId, float amount, String email) {
         Order order = orders.transformToOrder(cartId, amount);
 
         if (order.isNotCompleted()) {
@@ -43,6 +46,8 @@ public class TransformToOrder {
 
             return failed;
         }
+
+        confirmationService.send(email, order.id(), order.amount());
 
         LOGGER.info("Cart transformed to order: {}", order.id());
         return PayAndTransformToOrderResult.succeeded(

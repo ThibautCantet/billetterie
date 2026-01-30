@@ -7,7 +7,8 @@ public record PaymentRequest(
         String expirationDate,
         String cypher,
         String cartId,
-        String amount
+        String amount,
+        String email
 ) {
     public PaymentRequest(Payment payment) {
         this(
@@ -15,7 +16,8 @@ public record PaymentRequest(
                 payment.expirationDate(),
                 payment.cypher(),
                 payment.cartId(),
-                String.valueOf(payment.amount())
+                String.valueOf(payment.amount()),
+                payment.email()
         );
     }
 }

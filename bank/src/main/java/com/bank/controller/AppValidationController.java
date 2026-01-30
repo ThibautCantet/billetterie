@@ -16,6 +16,7 @@ public class AppValidationController {
      * @param status
      * @param cartId
      * @param amount
+     * @param email
      * @param model
      * @return
      */
@@ -25,11 +26,13 @@ public class AppValidationController {
             @RequestParam(name = "status") String status,
             @RequestParam(name = "cartId") String cartId,
             @RequestParam(name = "amount") Float amount,
+            @RequestParam(name = "email") String email,
             Model model) {
         model.addAttribute("transactionId", transactionId);
         model.addAttribute("status", status);
         model.addAttribute("cartId", cartId);
         model.addAttribute("amount", amount);
+        model.addAttribute("email", email);
         return "validation";
     }
 }

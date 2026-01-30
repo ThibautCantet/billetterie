@@ -3,6 +3,7 @@ package com.billetterie.payment.use_case;
 
 import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.CustomerSupport;
+import com.billetterie.payment.domain.ConfirmationService;
 import com.billetterie.payment.domain.Order;
 import com.billetterie.payment.domain.Orders;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
@@ -27,6 +28,7 @@ class PayAndTransformToOrderTest {
     private static final String EXPIRATION_DATE = "12/27";
     private static final String CYPHER = "123";
     private static final float AMOUNT = 100.0f;
+    private static final String EMAIL = "client@mail.com";
     private static final String TRANSACTION_ID = "324234243234";
 
     private PayAndTransformToOrder payAndTransformToOrder;
@@ -37,25 +39,27 @@ class PayAndTransformToOrderTest {
     private Orders orders;
     @Mock
     private CustomerSupport customerSupport;
+    @Mock
+    private ConfirmationService confirmationService;
 
     @BeforeEach
     void setUp() {
-        payAndTransformToOrder = new PayAndTransformToOrder(bank, new TransformToOrder(orders, bank, customerSupport));
+        payAndTransformToOrder = new PayAndTransformToOrder(bank, new TransformToOrder(orders, bank, customerSupport, confirmationService));
     }
 
     @Test
-    public void should_return_ok_when_payment_succeeds_and_transform_to_order_succeeds() {
+    public void should_return_ok_when_payment_succeeds_and_transform_to_order_succeeds_and_send_confirmation_email() {
         // given
         var succeededTransaction = new Transaction(TRANSACTION_ID, PaymentStatus.SUCCESS, null);
 
-        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, CART_ID, AMOUNT)))
+        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, CART_ID, AMOUNT, EMAIL)))
                 .thenReturn(succeededTransaction);
 
         var order = new Order(ORDER_ID, AMOUNT);
         when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
 
         // when
-        var result = payAndTransformToOrder.execute(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT);
+        var result = payAndTransformToOrder.execute(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT, EMAIL);
 
         // then
         assertThat(result).extracting(PayAndTransformToOrderResult::status,
@@ -64,6 +68,8 @@ class PayAndTransformToOrderTest {
                         PayAndTransformToOrderResult::redirectUrl,
                         PayAndTransformToOrderResult::amount)
                 .containsExactly(PaymentStatus.SUCCESS, "324234243234", ORDER_ID, "/confirmation/654654?amount=100.0", AMOUNT);
+
+        verify(confirmationService).send(EMAIL, ORDER_ID, AMOUNT);
     }
 
     @Test
@@ -71,18 +77,21 @@ class PayAndTransformToOrderTest {
         // given
         var transactionToValidate = new Transaction(TRANSACTION_ID, PaymentStatus.PENDING, "/3ds");
 
-        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, CART_ID, AMOUNT)))
+        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, CART_ID, AMOUNT, EMAIL)))
                 .thenReturn(transactionToValidate);
 
         // when
-        var result = payAndTransformToOrder.execute(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT);
+        var result = payAndTransformToOrder.execute(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT, EMAIL);
 
         // then
         assertThat(result).extracting(PayAndTransformToOrderResult::status,
                         PayAndTransformToOrderResult::transactionId,
                         PayAndTransformToOrderResult::redirectUrl,
-                        PayAndTransformToOrderResult::amount)
-                .containsExactly(PaymentStatus.PENDING, TRANSACTION_ID, "/3ds", AMOUNT);
+                        PayAndTransformToOrderResult::amount,
+                        PayAndTransformToOrderResult::email)
+                .containsExactly(PaymentStatus.PENDING, TRANSACTION_ID, "/3ds", AMOUNT, EMAIL);
+
+        verify(confirmationService, never()).send(any(), any(), anyFloat());
     }
 
     @Test
@@ -90,16 +99,18 @@ class PayAndTransformToOrderTest {
         // given
         var failedTransaction = new Transaction(TRANSACTION_ID, PaymentStatus.FAILED, null);
 
-        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, CART_ID, AMOUNT)))
+        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, CART_ID, AMOUNT, EMAIL)))
                 .thenReturn(failedTransaction);
 
         // when
-        var result = payAndTransformToOrder.execute(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT);
+        var result = payAndTransformToOrder.execute(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT, EMAIL);
 
         // then
         assertThat(result).extracting(PayAndTransformToOrderResult::status,
                         PayAndTransformToOrderResult::transactionId)
                 .containsExactly(PaymentStatus.FAILED, TRANSACTION_ID);
+
+        verify(confirmationService, never()).send(any(), any(), anyFloat());
     }
 
     @Test
@@ -107,7 +118,7 @@ class PayAndTransformToOrderTest {
         // given
         var succeededTransaction = new Transaction(TRANSACTION_ID, PaymentStatus.SUCCESS, null);
 
-        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, CART_ID, AMOUNT)))
+        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, CART_ID, AMOUNT, EMAIL)))
                 .thenReturn(succeededTransaction);
 
         var failedOrder = new Order(null, 0f);
@@ -116,7 +127,7 @@ class PayAndTransformToOrderTest {
         when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(true);
 
         // when
-        var result = payAndTransformToOrder.execute(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT);
+        var result = payAndTransformToOrder.execute(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT, EMAIL);
 
         // then
         assertThat(result).extracting(PayAndTransformToOrderResult::status,
@@ -129,6 +140,8 @@ class PayAndTransformToOrderTest {
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
         verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
+
+        verify(confirmationService, never()).send(any(), any(), anyFloat());
     }
 
     @Test
@@ -136,7 +149,7 @@ class PayAndTransformToOrderTest {
         // given
         var succeededTransaction = new Transaction(TRANSACTION_ID, PaymentStatus.SUCCESS, null);
 
-        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, CART_ID, AMOUNT)))
+        when(bank.pay(new Payment(CARD_NUMBER, EXPIRATION_DATE, CYPHER, CART_ID, AMOUNT, EMAIL)))
                 .thenReturn(succeededTransaction);
 
         var failedOrder = new Order(null, 0f);
@@ -145,7 +158,7 @@ class PayAndTransformToOrderTest {
         when(bank.cancel(TRANSACTION_ID, AMOUNT)).thenReturn(false);
 
         // when
-        var result = payAndTransformToOrder.execute(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT);
+        var result = payAndTransformToOrder.execute(CART_ID, CARD_NUMBER, EXPIRATION_DATE, CYPHER, AMOUNT, EMAIL);
 
         // then
         assertThat(result).extracting(PayAndTransformToOrderResult::status,
@@ -158,6 +171,8 @@ class PayAndTransformToOrderTest {
         verify(bank).cancel(TRANSACTION_ID, AMOUNT);
 
         verify(customerSupport).alertTransactionFailure(TRANSACTION_ID, CART_ID, AMOUNT);
+
+        verify(confirmationService, never()).send(any(), any(), anyFloat());
     }
 
 }

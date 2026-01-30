@@ -1,11 +1,12 @@
 package com.billetterie.payment;
 
+import com.billetterie.payment.domain.ConfirmationService;
+import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.infrastructure.controller.PaymentController;
 import com.billetterie.payment.infrastructure.controller.dto.CartDto;
 import com.billetterie.payment.infrastructure.controller.dto.CreditCardDto;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentDto;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentResultDto;
-import com.billetterie.payment.infrastructure.service.EmailCustomerSupport;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import io.cucumber.java.After;
@@ -25,8 +26,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.assertj.core.api.Assertions.*;
 import static org.hamcrest.Matchers.*;
@@ -42,12 +43,16 @@ public class PaymentATest extends ATest {
     private CartDto cartDto;
     private String cartNumber;
     private CreditCardDto creditCardDto;
+    private String email;
 
     private final WireMockConfiguration port = options().port(PORT);
     private final WireMockServer wireMockServer = new WireMockServer(port);
 
     @MockitoSpyBean
-    private EmailCustomerSupport emailCustomerSupport;
+    private CustomerSupport emailCustomerSupport;
+
+    @MockitoSpyBean
+    private ConfirmationService confirmationService;
 
     @Before
     public void setUpBefore() {
@@ -66,9 +71,10 @@ public class PaymentATest extends ATest {
         RestAssured.basePath = PaymentController.PATH;
     }
 
-    @Etantdonné("un panier {string} de {float} euros")
-    public void unPanierDeEuros(String panierId, float amount) {
+    @Etantdonné("un panier {string} de {float} euros pour {string}")
+    public void unPanierDeEuros(String panierId, float amount, String email) {
         cartDto = new CartDto(panierId, amount);
+        this.email = email;
     }
 
     @Et("des information de paiement suivant numéro de carte {string}")
@@ -87,7 +93,7 @@ public class PaymentATest extends ATest {
         response = RestAssured.given()
                 .log().all()
                 .header("Content-Type", ContentType.JSON)
-                .body(new PaymentDto(cartDto, creditCardDto))
+                .body(new PaymentDto(email, cartDto, creditCardDto))
         .when()
                 .post("");
         //@formatter:on
@@ -115,9 +121,10 @@ public class PaymentATest extends ATest {
                             "expirationDate": "%s",
                             "cypher": "%s",
                             "cartId": "%s",
-                            "amount": "%s"
+                            "amount": "%s",
+                            "email": "%s"
                         }
-                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount())))
+                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount(), email)))
                 .willReturn(okJson(String.format("""
                         {
                           "id": "%s",
@@ -166,7 +173,7 @@ public class PaymentATest extends ATest {
         response = RestAssured.given()
                 .log().all()
                 .header("Content-Type", ContentType.JSON)
-                .body(new PaymentDto(cartDto, creditCardDto))
+                .body(new PaymentDto(email, cartDto, creditCardDto))
         .when()
                 .get(confirmationUrl);
         //@formatter:on
@@ -213,9 +220,10 @@ public class PaymentATest extends ATest {
                             "expirationDate": "%s",
                             "cypher": "%s",
                             "cartId": "%s",
-                            "amount": "%s"
+                            "amount": "%s",
+                            "email": "%s"
                         }
-                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount())))
+                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount(), email)))
                 .willReturn(okJson(String.format("""
                         {
                           "id": "%s",
@@ -289,9 +297,10 @@ public class PaymentATest extends ATest {
                             "expirationDate": "%s",
                             "cypher": "%s",
                             "cartId": "%s",
-                            "amount": "%s"
+                            "amount": "%s",
+                            "email": "%s"
                         }
-                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount())))
+                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount(), email)))
                 .willReturn(okJson(String.format("""
                         {
                           "id": "%s",
@@ -311,9 +320,10 @@ public class PaymentATest extends ATest {
                             "expirationDate": "%s",
                             "cypher": "%s",
                             "cartId": "%s",
-                            "amount": "%s"
+                            "amount": "%s",
+                            "email": "%s"
                         }
-                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount())))
+                        """, creditCardDto.number(), creditCardDto.expirationDate(), creditCardDto.cypher(), cartDto.id(), cartDto.amount(), email)))
                 .willReturn(okJson(String.format("""
                         {
                           "id": "%s",
@@ -329,12 +339,14 @@ public class PaymentATest extends ATest {
         response = RestAssured.given()
                 .log().all()
                 .header("Content-Type", ContentType.JSON)
-                .body(new PaymentDto(cartDto, creditCardDto))
+                .body(new PaymentDto(email, cartDto, creditCardDto))
         .when()
                 .get("/cart/confirmation?transactionId=" + transactionId
                      + "&status=" + status
                      + "&cartId=" + cartDto.id()
-                     + "&amount=" + cartDto.amount());
+                     + "&amount=" + cartDto.amount()
+                     + "&email=" + email
+                );
         //@formatter:on
     }
 
@@ -383,5 +395,10 @@ public class PaymentATest extends ATest {
     @Et("le support client est notifié qu'il faut annuler la transaction bancaire {string} à la main")
     public void leSupportClientEstNotifiéQuIlFautAnnulerLaTransactionBancaireÀLaMain(String transactionId) {
         Mockito.verify(emailCustomerSupport).alertTransactionFailure(transactionId, cartDto.id(), cartDto.amount());
+    }
+
+    @Et("un email de confirmation est envoyé à {string} pour la commande {string} d'un montant de {float} euros")
+    public void unEmailDeConfirmationEstEnvoyé(String email, String orderId, float amount) {
+        Mockito.verify(confirmationService).send(email, orderId, amount);
     }
 }

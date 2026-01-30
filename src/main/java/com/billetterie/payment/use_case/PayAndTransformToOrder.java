@@ -8,8 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import static com.billetterie.payment.domain.PaymentStatus.*;
-
 @Service
 public class PayAndTransformToOrder {
     private static final Logger LOGGER = LoggerFactory.getLogger(PayAndTransformToOrder.class);
@@ -22,14 +20,15 @@ public class PayAndTransformToOrder {
         this.transformToOrder = transformToOrder;
     }
 
-    public PayAndTransformToOrderResult execute(String cartId, String cardNumber, String expirationDate, String cypher, float amount) {
-        Transaction transaction = bank.pay(new Payment(cardNumber, expirationDate, cypher, cartId, amount));
+    public PayAndTransformToOrderResult execute(String cartId, String cardNumber, String expirationDate, String cypher, float amount, String email) {
+        Transaction transaction = bank.pay(new Payment(cardNumber, expirationDate, cypher, cartId, amount, email));
 
         if (transaction.isPending()) {
             var pendingTransaction = PayAndTransformToOrderResult.pending(
                     transaction.id(),
                     transaction.redirectionUrl(),
-                    amount);
+                    amount,
+                    email);
             LOGGER.info("Transaction is pending: {}", pendingTransaction);
             return pendingTransaction;
         }
@@ -43,6 +42,6 @@ public class PayAndTransformToOrder {
 
         LOGGER.info("Transaction for cart id {} succeeded, with transaction id:{}", cartId, transaction.id());
 
-        return transformToOrder.execute(transaction.id(), cartId, amount);
+        return transformToOrder.execute(transaction.id(), cartId, amount, email);
     }
 }
