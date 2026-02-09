@@ -24,7 +24,7 @@ class PaymentSucceededListenerTest {
 
     @Test
     void should_return_new_TransformToOrderCommand() {
-        var paymentSucceeded = new PaymentSucceeded(PaymentStatus.SUCCESS, "tx123", "cart123", 100.0f);
+        var paymentSucceeded = new PaymentSucceeded(PaymentStatus.SUCCESS, "tx123", "cart123", 100.0f, "client@mail.com");
 
         var command = paymentSucceededListener.handle(paymentSucceeded);
 
@@ -33,8 +33,9 @@ class PaymentSucceededListenerTest {
                 .asInstanceOf(InstanceOfAssertFactories.type(TransformToOrderCommand.class))
                 .extracting(TransformToOrderCommand::transactionId,
                             TransformToOrderCommand::cartId,
-                            TransformToOrderCommand::amount)
-                .containsExactly("tx123", "cart123", 100.0f);
+                            TransformToOrderCommand::amount,
+                            TransformToOrderCommand::email)
+                .containsExactly("tx123", "cart123", 100.0f, "client@mail.com");
     }
 
     @Test

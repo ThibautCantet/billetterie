@@ -1,23 +1,18 @@
 package com.billetterie.payment.commandHandler;
 
 import com.billetterie.payment.domain.Bank;
-import com.billetterie.payment.domain.ConfirmationService;
 import com.billetterie.payment.domain.CustomerSupport;
 import com.billetterie.payment.domain.Order;
 import com.billetterie.payment.domain.OrderCreated;
 import com.billetterie.payment.domain.OrderNotCreated;
 import com.billetterie.payment.domain.Orders;
-import com.billetterie.payment.use_case.AlertTransactionFailureCommandHandler;
-import com.billetterie.payment.use_case.CancelTransactionCommandHandler;
 import com.billetterie.payment.use_case.TransformToOrderCommand;
 import com.billetterie.payment.use_case.TransformToOrderCommandHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static com.billetterie.payment.domain.PaymentStatus.*;
@@ -31,6 +26,7 @@ public class TransformToOrderCommandHandlerTest {
     private static final String ORDER_ID = "654654";
     private static final float AMOUNT = 100.0f;
     private static final String TRANSACTION_ID = "324234243234";
+    private static final String EMAIL = "client@mail.com";
 
     private TransformToOrderCommandHandler transformToOrderCommandHandler;
 
@@ -41,19 +37,15 @@ public class TransformToOrderCommandHandlerTest {
     private Bank bank;
     @Mock
     private CustomerSupport customerSupport;
-    @Mock
-    private ConfirmationService confirmationService;
-    @Spy
-    @InjectMocks
-    private AlertTransactionFailureCommandHandler alertTransactionFailureCommandHandler;
 
     @BeforeEach
     void setUp() {
-        transformToOrderCommandHandler = new TransformToOrderCommandHandler(orders, bank, customerSupport, confirmationService);
+        transformToOrderCommandHandler = new TransformToOrderCommandHandler(orders);
     }
 
     @Nested
     class Handle {
+
         @Test
         void should_return_OrderCreated_when_transform_to_order_succeeds() {
             // given
@@ -61,15 +53,16 @@ public class TransformToOrderCommandHandlerTest {
             when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
 
             // when
-            var result = transformToOrderCommandHandler.handle(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT));
+            var result = transformToOrderCommandHandler.handle(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT, EMAIL));
 
             // then
             assertThat(result.firstAs(OrderCreated.class)).extracting(OrderCreated::status,
                             OrderCreated::transactionId,
                             OrderCreated::orderId,
                             OrderCreated::redirectUrl,
-                            OrderCreated::amount)
-                    .containsExactly(SUCCESS, TRANSACTION_ID, ORDER_ID, "/confirmation/654654?amount=100.0", AMOUNT);
+                            OrderCreated::amount,
+                            OrderCreated::email)
+                    .containsExactly(SUCCESS, TRANSACTION_ID, ORDER_ID, "/confirmation/654654?amount=100.0", AMOUNT, EMAIL);
         }
 
         @Test
@@ -79,7 +72,7 @@ public class TransformToOrderCommandHandlerTest {
             when(orders.transformToOrder(CART_ID, AMOUNT)).thenReturn(order);
 
             // when
-            var result = transformToOrderCommandHandler.handle(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT));
+            var result = transformToOrderCommandHandler.handle(new TransformToOrderCommand(TRANSACTION_ID, CART_ID, AMOUNT, EMAIL));
 
             // then
             assertThat(result.firstAs(OrderNotCreated.class)).extracting(OrderNotCreated::amount,
@@ -90,8 +83,6 @@ public class TransformToOrderCommandHandlerTest {
                             "/cart?error=true&cartId=123456&amount=100.0");
 
             verify(bank, never()).cancel(any(), any());
-
-            verify(alertTransactionFailureCommandHandler, never()).handle(any());
 
             verify(customerSupport, never()).alertTransactionFailure(any(), any(), any());
         }

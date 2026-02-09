@@ -18,8 +18,8 @@ public class SendConfirmationEmailCommandHandler implements CommandHandler<SendC
 
     @Override
     public CommandResponse<Event> handle(SendConfirmationEmailCommand command) {
-        //TODO: implement the logic to send confirmation email
-        return null;
+        confirmationService.send(command.email(), command.orderId(), command.amount());
+        return new CommandResponse<>(new ConfirmationEmailSent(command.email(), command.orderId(), command.amount()));
     }
 
     @Override

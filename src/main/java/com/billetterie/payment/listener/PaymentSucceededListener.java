@@ -9,7 +9,7 @@ public class PaymentSucceededListener extends EventHandlerCommand<PaymentSucceed
 
     @Override
     public Command handle(PaymentSucceeded event) {
-        return new TransformToOrderCommand(event.transactionId(), event.cartId(), event.amount());
+        return new TransformToOrderCommand(event.transactionId(), event.cartId(), event.amount(), event.email());
     }
 
     @Override

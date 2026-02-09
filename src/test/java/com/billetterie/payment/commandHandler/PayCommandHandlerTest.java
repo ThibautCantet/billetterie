@@ -9,7 +9,6 @@ import com.billetterie.payment.domain.TransactionFailed;
 import com.billetterie.payment.domain.ValidationRequested;
 import com.billetterie.payment.use_case.PayCommand;
 import com.billetterie.payment.use_case.PayCommandHandler;
-import com.billetterie.payment.use_case.TransformToOrderCommandHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -35,12 +34,10 @@ public class PayCommandHandlerTest {
 
     @Mock
     private Bank bank;
-    @Mock
-    private TransformToOrderCommandHandler transformToOrderCommandHandler;
 
     @BeforeEach
     void setUp() {
-        payCommandHandler = new PayCommandHandler(bank, transformToOrderCommandHandler);
+        payCommandHandler = new PayCommandHandler(bank);
     }
 
     @Nested
