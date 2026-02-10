@@ -58,18 +58,25 @@ public class PaymentController {
                 paymentDto.creditCardDto().cypher(),
                 paymentDto.cartDto().amount(),
                 paymentDto.email());
-        //TODO: remplacer par un switch sur le type d'event : OrderCreated ou ValidationRequested ou TransactionFailed
-        // afin de retourner un PaymentResultDto contenant les bonnes valeurs
-        if (result.status() == FAILED) {
-            return new PaymentResultDto(result.status());
-        }
-
-        return new PaymentResultDto(
-                result.status(),
-                result.orderId(),
-                result.amount(),
-                result.transactionId(),
-                result.redirectUrl());
+        return switch (result.first()) {
+            case OrderCreated(
+                    PaymentStatus status, String transactionId, String redirectUrl, String orderId, float amount,
+                    String email
+            ) -> new PaymentResultDto(
+                    status,
+                    orderId,
+                    amount,
+                    transactionId,
+                    redirectUrl);
+            case ValidationRequested(
+                    PaymentStatus status, String transactionId, String redirectUrl, Float amount
+            ) -> new PaymentResultDto(status,
+                    null,
+                    amount,
+                    transactionId,
+                    redirectUrl);
+            case null, default -> new PaymentResultDto(FAILED);
+        };
     }
 
     @GetMapping("/cart/confirmation")
@@ -88,20 +95,19 @@ public class PaymentController {
             //TODO: dispatcher une command TransformToOrderCommand
             result = transformToOrder.execute(transactionId, cartId, amount, email);
 
-            //TODO: remplacer pour un switch sur le type d'event : OrderNotCreated ou OrderCreated
-            // afin de retourner une instance de PaymentResultDto avec les bonnes valeurs
-            // par défaut initialiser response à redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
-            if (result.status() == PaymentStatus.FAILED) {
-                response = redirectToCartOnError(amount, result.redirectUrl(), headers);
-            } else {
-                headers.setLocation(URI.create(result.redirectUrl()));
+            if (result.first() instanceof OrderNotCreated orderNotCreated) {
+                response = redirectToCartOnError(amount, orderNotCreated.redirectUrl(), headers);
+            } else if (result.first() instanceof OrderCreated orderCreated) {
+                headers.setLocation(URI.create(orderCreated.redirectUrl()));
                 response = new PaymentResultDto(
                         SUCCESS,
-                        result.orderId(),
-                        result.amount(),
-                        result.transactionId(),
-                        result.redirectUrl());
-                LOGGER.info("Transaction succeeded, redirecting to confirmation page: {} {}", result.redirectUrl(), response);
+                        orderCreated.orderId(),
+                        orderCreated.amount(),
+                        orderCreated.transactionId(),
+                        orderCreated.redirectUrl());
+                LOGGER.info("Transaction succeeded, redirecting to confirmation page: {} {}", orderCreated.redirectUrl(), response);
+            } else {
+                response = redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
             }
         }
         return new ResponseEntity<>(response, headers, HttpStatusCode.valueOf(301));
