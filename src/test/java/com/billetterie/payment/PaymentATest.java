@@ -24,7 +24,6 @@ import io.restassured.http.ContentType;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.annotation.DirtiesContext;
@@ -38,7 +37,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.*;
 
-@AutoConfigureCache
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @DirtiesContext
 @CucumberContextConfiguration
