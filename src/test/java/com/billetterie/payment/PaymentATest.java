@@ -8,7 +8,6 @@ import com.billetterie.payment.infrastructure.controller.dto.PaymentResultDto;
 import com.billetterie.payment.infrastructure.service.EmailCustomerSupport;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.fr.Alors;
@@ -16,13 +15,9 @@ import io.cucumber.java.fr.Et;
 import io.cucumber.java.fr.Etantdonné;
 import io.cucumber.java.fr.Etque;
 import io.cucumber.java.fr.Quand;
-import io.cucumber.junit.Cucumber;
-import io.cucumber.junit.CucumberOptions;
 import io.cucumber.spring.CucumberContextConfiguration;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
@@ -40,9 +35,6 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @DirtiesContext
 @CucumberContextConfiguration
-@ExtendWith(WireMockExtension.class)
-@RunWith(Cucumber.class)
-@CucumberOptions(features = "classpath:Feature")
 @ActiveProfiles("test")
 public class PaymentATest extends ATest {
 
