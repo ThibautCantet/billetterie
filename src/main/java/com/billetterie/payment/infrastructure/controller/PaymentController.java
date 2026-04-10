@@ -4,12 +4,13 @@ import java.net.URI;
 
 import com.billetterie.payment.common.cqrs.application.CommandController;
 import com.billetterie.payment.common.cqrs.middleware.command.CommandBusFactory;
-import com.billetterie.payment.domain.PayAndTransformToOrderResult;
-import com.billetterie.payment.domain.PaymentStatus;
+import com.billetterie.payment.domain.OrderCreated;
+import com.billetterie.payment.domain.OrderNotCreated;
+import com.billetterie.payment.domain.ValidationRequested;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentDto;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentResultDto;
-import com.billetterie.payment.orchestration.PayAndTransformToOrder;
-import com.billetterie.payment.orchestration.TransformToOrder;
+import com.billetterie.payment.choregraphy.handler.PayCommand;
+import com.billetterie.payment.choregraphy.handler.TransformToOrderCommand;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,13 +33,9 @@ public class PaymentController extends CommandController {
     private static final Logger LOGGER = LoggerFactory.getLogger(PaymentController.class);
 
     public static final String PATH = "/api/payment";
-    private final PayAndTransformToOrder payAndTransformToOrder;
-    private final TransformToOrder transformToOrder;
 
-    public PaymentController(CommandBusFactory commandBusFactory, PayAndTransformToOrder payAndTransformToOrder, TransformToOrder transformToOrder) {
+    public PaymentController(CommandBusFactory commandBusFactory) {
         super(commandBusFactory);
-        this.payAndTransformToOrder = payAndTransformToOrder;
-        this.transformToOrder = transformToOrder;
     }
 
     /**
@@ -49,24 +46,34 @@ public class PaymentController extends CommandController {
      */
     @PostMapping
     public PaymentResultDto processPayment(@RequestBody PaymentDto paymentDto) {
-        PayAndTransformToOrderResult result = payAndTransformToOrder.execute(
+        var result = getCommandBus().dispatch(new PayCommand(
                 paymentDto.cartDto().id(),
                 paymentDto.creditCardDto().number(),
                 paymentDto.creditCardDto().expirationDate(),
                 paymentDto.creditCardDto().cypher(),
                 paymentDto.cartDto().amount(),
-                paymentDto.email());
-
-        if (result.status() == FAILED) {
-            return new PaymentResultDto(result.status());
+                paymentDto.email()));
+        var orderCreated = (OrderCreated) result.firstAs(OrderCreated.class);
+        if (orderCreated != null) {
+            return new PaymentResultDto(
+                    SUCCESS,
+                    orderCreated.orderId(),
+                    orderCreated.amount(),
+                    orderCreated.transactionId(),
+                    orderCreated.redirectUrl());
         }
 
-        return new PaymentResultDto(
-                result.status(),
-                result.orderId(),
-                result.amount(),
-                result.transactionId(),
-                result.redirectUrl());
+        var validationRequested = (ValidationRequested) result.firstAs(ValidationRequested.class);
+        if (validationRequested != null) {
+            return new PaymentResultDto(
+                    validationRequested.status(),
+                    null,
+                    validationRequested.amount(),
+                    validationRequested.transactionId(),
+                    validationRequested.redirectUrl());
+        }
+
+        return new PaymentResultDto(FAILED);
     }
 
     @GetMapping("/cart/confirmation")
@@ -76,25 +83,27 @@ public class PaymentController extends CommandController {
             @RequestParam(name = "cartId") String cartId,
             @RequestParam(name = "amount") Float amount,
             @RequestParam(name = "email") String email) {
-        PaymentResultDto response;
-        PayAndTransformToOrderResult result;
+        PaymentResultDto response = null;
         var headers = new HttpHeaders();
         if (status.equals("ko")) {
             response = redirectToCartOnError(amount, getErrorCartUrl(cartId, amount), headers);
         } else {
-            result = transformToOrder.execute(transactionId, cartId, amount, email);
+            var result = getCommandBus().dispatch(new TransformToOrderCommand(transactionId, cartId, amount, email));
 
-            if (result.status() == PaymentStatus.FAILED) {
-                response = redirectToCartOnError(amount, result.redirectUrl(), headers);
-            } else {
-                headers.setLocation(URI.create(result.redirectUrl()));
+            var orderNotCreated = (OrderNotCreated) result.findFirst(OrderNotCreated.class).orElse(null);
+            var orderCreated = (OrderCreated) result.findFirst(OrderCreated.class).orElse(null);
+
+            if (orderNotCreated != null) {
+                response = redirectToCartOnError(amount, orderNotCreated.redirectUrl(), headers);
+            } else if (orderCreated != null) {
+                headers.setLocation(URI.create(orderCreated.redirectUrl()));
                 response = new PaymentResultDto(
                         SUCCESS,
-                        result.orderId(),
-                        result.amount(),
-                        result.transactionId(),
-                        result.redirectUrl());
-                LOGGER.info("Transaction succeeded, redirecting to confirmation page: {} {}", result.redirectUrl(), response);
+                        orderCreated.orderId(),
+                        orderCreated.amount(),
+                        orderCreated.transactionId(),
+                        orderCreated.redirectUrl());
+                LOGGER.info("Transaction succeeded, redirecting to confirmation page: {} {}", orderCreated.redirectUrl(), response);
             }
         }
         return new ResponseEntity<>(response, headers, HttpStatusCode.valueOf(301));
