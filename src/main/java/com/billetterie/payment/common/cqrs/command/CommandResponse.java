@@ -28,7 +28,7 @@ public class CommandResponse<E extends Event> {
     }
 
     public E first() {
-        return events.getLast();
+        return events.get(0);
     }
 
     public <T extends E> T firstAs(Class<T> clazz) {
