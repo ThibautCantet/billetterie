@@ -1,16 +1,15 @@
 package com.billetterie.payment.choregraphy.listener;
 
-import com.billetterie.payment.choregraphy.handler.AlertTransactionFailureCommand;
 import com.billetterie.payment.common.cqrs.command.Command;
 import com.billetterie.payment.common.cqrs.event.EventHandlerCommand;
 import com.billetterie.payment.domain.CancelTransactionFailed;
+import com.billetterie.payment.choregraphy.handler.AlertTransactionFailureCommand;
 
 public class CancelTransactionFailedListener extends EventHandlerCommand<CancelTransactionFailed> {
 
     @Override
     public Command handle(CancelTransactionFailed event) {
-        //TODO: return a AlertTransactionFailureCommand with transactionId, cartId and amount from the event
-        return null;
+        return new AlertTransactionFailureCommand(event.transactionId(), event.cartId(), event.amount());
     }
 
     @Override

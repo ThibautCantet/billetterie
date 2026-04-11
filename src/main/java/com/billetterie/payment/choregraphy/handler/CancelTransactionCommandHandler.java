@@ -18,15 +18,17 @@ public class CancelTransactionCommandHandler implements CommandHandler<CancelTra
         this.bank = bank;
     }
 
-    public CommandResponse<Event> handle(CancelTransactionCommand  command) {
+    @Override
+    public CommandResponse<Event> handle(CancelTransactionCommand command) {
         var cancel = bank.cancel(command.transactionId(), command.amount());
-        //TODO: whether the cancel is successful or not, return the appropriate event in a CommandResponse
-        // CancelTransactionSucceeded with transactionId ou CancelTransactionFailed with transactionId, cartId and amount from the command
-        return new CommandResponse<>(List.of());
+        if (cancel) {
+            return new CommandResponse<>(new CancelTransactionSucceeded(command.transactionId()));
+        }
+        return new CommandResponse<>(CancelTransactionFailed.of(command));
     }
 
     @Override
-    public Class listenTo() {
+    public Class<CancelTransactionCommand> listenTo() {
         return CancelTransactionCommand.class;
     }
 }

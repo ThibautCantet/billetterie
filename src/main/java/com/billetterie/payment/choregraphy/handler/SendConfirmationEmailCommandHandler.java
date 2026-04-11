@@ -3,6 +3,7 @@ package com.billetterie.payment.choregraphy.handler;
 import com.billetterie.payment.common.cqrs.command.CommandHandler;
 import com.billetterie.payment.common.cqrs.command.CommandResponse;
 import com.billetterie.payment.common.cqrs.event.Event;
+import com.billetterie.payment.domain.ConfirmationEmailSent;
 import com.billetterie.payment.domain.ConfirmationService;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +18,8 @@ public class SendConfirmationEmailCommandHandler implements CommandHandler<SendC
 
     @Override
     public CommandResponse<Event> handle(SendConfirmationEmailCommand command) {
-        //TODO: implement the logic to send confirmation email using the confirmationService.send method with the email, orderId and amount from the command
-        return null;
+        confirmationService.send(command.email(), command.orderId(), command.amount());
+        return new CommandResponse<>(new ConfirmationEmailSent(command.email(), command.orderId(), command.amount()));
     }
 
     @Override

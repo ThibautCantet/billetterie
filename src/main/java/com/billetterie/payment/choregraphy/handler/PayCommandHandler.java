@@ -21,21 +21,24 @@ public class PayCommandHandler implements CommandHandler<PayCommand, CommandResp
         this.bank = bank;
     }
 
+    @Override
     public CommandResponse<Event> handle(PayCommand command) {
         Payment payment = new Payment(command.cartId(), command.cardNumber(), command.expirationDate(), command.cypher(), command.amount(), command.email());
         var transaction = bank.pay(payment);
-        //TODO: depending of the transaction status transaction.isPending() or transaction.hasSucceeded()
-        // return a event of type :
-        // - ValidationRequested.of with transaction.id and transaction.redirectionUrl and command.amount
-        // - TransactionFailed.of with transaction.if
-        // - PaymentSucceeded.of with transaction and command
-        return new CommandResponse<>(List.of());
+
+        return switch (transaction.status()) {
+            case PENDING -> new CommandResponse<>(new ValidationRequested(
+                    PaymentStatus.PENDING,
+                    transaction.id(),
+                    transaction.redirectionUrl(),
+                    command.amount()));
+            case FAILED -> new CommandResponse<>(new TransactionFailed(PaymentStatus.FAILED, transaction.id()));
+            case SUCCESS -> new CommandResponse<>(PaymentSucceeded.of(transaction, command));
+        };
     }
 
     @Override
-    public Class listenTo() {
+    public Class<PayCommand> listenTo() {
         return PayCommand.class;
     }
-
-
 }

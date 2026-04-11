@@ -1,16 +1,15 @@
 package com.billetterie.payment.choregraphy.listener;
 
-import com.billetterie.payment.choregraphy.handler.SendConfirmationEmailCommand;
 import com.billetterie.payment.common.cqrs.command.Command;
 import com.billetterie.payment.common.cqrs.event.EventHandlerCommand;
 import com.billetterie.payment.domain.TransformToOrderSucceeded;
+import com.billetterie.payment.choregraphy.handler.SendConfirmationEmailCommand;
 
 public class TransformToOrderSucceededListener extends EventHandlerCommand<TransformToOrderSucceeded> {
 
     @Override
     public Command handle(TransformToOrderSucceeded event) {
-        //TODO: return a SendConfirmationEmailCommand with email, orderId and amount from the event
-        return null;
+        return new SendConfirmationEmailCommand(event.email(), event.orderId(), event.amount());
     }
 
     @Override
@@ -18,4 +17,3 @@ public class TransformToOrderSucceededListener extends EventHandlerCommand<Trans
         return TransformToOrderSucceeded.class;
     }
 }
-

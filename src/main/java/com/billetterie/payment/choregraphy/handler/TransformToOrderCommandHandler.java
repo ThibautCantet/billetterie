@@ -5,6 +5,10 @@ import java.util.List;
 import com.billetterie.payment.common.cqrs.command.CommandHandler;
 import com.billetterie.payment.common.cqrs.command.CommandResponse;
 import com.billetterie.payment.common.cqrs.event.Event;
+import com.billetterie.payment.domain.Order;
+import com.billetterie.payment.domain.OrderCreated;
+import com.billetterie.payment.domain.OrderNotCreated;
+import com.billetterie.payment.domain.TransformToOrderSucceeded;
 import com.billetterie.payment.domain.Orders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,25 +26,30 @@ public class TransformToOrderCommandHandler implements CommandHandler<TransformT
 
     @Override
     public CommandResponse<Event> handle(TransformToOrderCommand command) {
-        //TODO: call order.transformToOrder with cartId and amount
+        Order order = orders.transformToOrder(command.cartId(), command.amount());
 
-        //TODO: check if order.isCompleted() then
-        // return 2 events
-        // - OrderCreated.of(command.transactionId(), order.id(), command.amount(), command.email());
-        // - and new TransformToOrderSucceeded(command.email(), order.id(), command.amount());
+        if (order.isCompleted()) {
+        LOGGER.info("Cart transformed to order: {}", order.id());
+        var orderCreated = OrderCreated.of(command.transactionId(), order.id(), command.amount(), command.email());
+        var transformToOrderSucceeded = new TransformToOrderSucceeded(command.email(), order.id(), command.amount());
+        return new CommandResponse<>(
+                List.of(orderCreated, transformToOrderSucceeded));
+        }
 
-        //TODO the order is not completed then return
-        // new OrderNotCreated(
-        //           command.transactionId(),
-        //           command.amount(),
-        //           getErrorCartUrl(command.cartId(), command.amount()),
-        //           command.cartId());
+        LOGGER.warn("Cart not transformed to order: {}", command.cartId());
 
-        return new CommandResponse<>(List.of());
+        var orderNotCreated = new OrderNotCreated(
+                command.transactionId(),
+                command.amount(),
+                getErrorCartUrl(command.cartId(), command.amount()),
+                command.cartId());
+        LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", orderNotCreated);
+
+        return new CommandResponse<>(orderNotCreated);
     }
 
     @Override
-    public Class listenTo() {
+    public Class<TransformToOrderCommand> listenTo() {
         return TransformToOrderCommand.class;
     }
 

@@ -39,14 +39,20 @@ public class CommandBusFactory {
 
     protected List<CommandHandler> getCommandHandlers() {
         return List.of(
-                //TODO: add Pay and TransformToOrder, CancelTransaction, AlertTransactionFailure and SendConfirmationEmail handlers
+                new PayCommandHandler(bank),
+                new TransformToOrderCommandHandler(orders),
+                new CancelTransactionCommandHandler(bank),
+                new AlertTransactionFailureCommandHandler(customerSupport),
+                new SendConfirmationEmailCommandHandler(confirmationService)
         );
     }
 
     protected List<EventHandler<? extends Event>> getEventHandlers() {
         return List.of(
-                //TODO: register PaymentSucceededListener register OrderNotCreatedListener, CancelTransactionFailedListener
-                // and TransformToOrderSucceededListener listeners
+                new PaymentSucceededListener(),
+                new OrderNotCreatedListener(),
+                new CancelTransactionFailedListener(),
+                new TransformToOrderSucceededListener()
         );
     }
 
