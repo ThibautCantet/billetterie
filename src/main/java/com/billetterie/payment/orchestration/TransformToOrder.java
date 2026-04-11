@@ -28,17 +28,34 @@ public class TransformToOrder {
     }
 
     public PayAndTransformToOrderResult execute(String transactionId, String cartId, float amount, String email) {
-        //TODO: transform to order, see order.transformToOrder(...)
-        //TODO: check if the order.isCompleted() then send a confirmation email, see confirmationService.send(...)
-            //TODO: return a succeeded result, see PayAndTransformToOrderResult.succeeded();
+        Order order = orders.transformToOrder(cartId, amount);
 
-        //TODO: else the order is not completed then cancel transaction, see bank.cancel(...)
-            //TODO: if transaction is not cancelled then alert customer support, see customerSupport.alertTransactionFailure(...)
+        if (order.isCompleted()) {
 
-        //TODO: anyway, return a failed result, see PayAndTransformToOrderResult.failed(...)
-        // tip: use getErrorCartUrl(cartId, amount)) for last parameter
+            confirmationService.send(email, order.id(), order.amount());
 
-        return new PayAndTransformToOrderResult(PaymentStatus.FAILED, null, null, null, null, null);
+            LOGGER.info("Cart transformed to order: {}", order.id());
+            return PayAndTransformToOrderResult.succeeded(
+                    transactionId,
+                    order.id(),
+                    amount);
+        }
+
+        LOGGER.warn("Cart not transformed to order: {}", cartId);
+        boolean cancel = bank.cancel(transactionId, amount);
+        if (!cancel) {
+            LOGGER.error("Transaction cancellation failed: {}", transactionId);
+            customerSupport.alertTransactionFailure(transactionId, cartId, amount);
+        } else {
+            LOGGER.info("Transaction cancelled: {}", transactionId);
+        }
+
+        var failed = PayAndTransformToOrderResult.failed(
+                transactionId,
+                getErrorCartUrl(cartId, amount));
+        LOGGER.info("Cart not transformed into order and redirect to empty cart: {}", failed);
+
+        return failed;
     }
 
     public static String getErrorCartUrl(String cartId, float amount) {

@@ -2,7 +2,9 @@ package com.billetterie.payment.orchestration;
 
 import com.billetterie.payment.domain.Bank;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
+import com.billetterie.payment.domain.Payment;
 import com.billetterie.payment.domain.PaymentStatus;
+import com.billetterie.payment.domain.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -20,17 +22,27 @@ public class PayAndTransformToOrder {
     }
 
     public PayAndTransformToOrderResult execute(String cartId, String cardNumber, String expirationDate, String cypher, float amount, String email) {
-        //TODO: pay the order, see bank.pay(...)
+        Transaction transaction = bank.pay(new Payment(cartId, cardNumber, expirationDate, cypher, amount, email));
 
-        //TODO: check if transaction isPending() then return pending result, see PayAndTransformToOrderResult.pending(...)
+        if (transaction.isPending()) {
+            var pendingTransaction = PayAndTransformToOrderResult.pending(
+                    transaction.id(),
+                    transaction.redirectionUrl(),
+                    amount,
+                    email);
+            LOGGER.info("Transaction is pending: {}", pendingTransaction);
+            return pendingTransaction;
+        }
 
-        //TODO: check if transaction NOT hasSucceeded() then return failed, see PayAndTransformToOrderResult.failed(...)
+        if (!transaction.hasSucceeded()) {
+            var failedTransaction = PayAndTransformToOrderResult.failed(
+                    transaction.id());
+            LOGGER.info("Transaction failed: {}", failedTransaction);
+            return failedTransaction;
+        }
 
-        // we had 2 choices for the implementation:
-        // a) call next use case transformToOrder.execute(transaction.id(), cartId, amount, email);
-        // b) implement the rest of the orchestration
-        // in this workshop, you can only call the other use case
-        //TODO: call transform to order with orders.transformToOrder(cartId, amount) to get an order
-        return new PayAndTransformToOrderResult(PaymentStatus.FAILED, null, null, null, null, null);
+        LOGGER.info("Transaction for cart id {} succeeded, with transaction id:{}", cartId, transaction.id());
+
+        return transformToOrder.execute(transaction.id(), cartId, amount, email);
     }
 }
