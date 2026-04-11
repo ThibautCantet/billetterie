@@ -2,8 +2,6 @@ package com.billetterie.payment.infrastructure.controller;
 
 import java.net.URI;
 
-import com.billetterie.payment.common.cqrs.application.CommandController;
-import com.billetterie.payment.common.cqrs.middleware.command.CommandBusFactory;
 import com.billetterie.payment.domain.PayAndTransformToOrderResult;
 import com.billetterie.payment.domain.PaymentStatus;
 import com.billetterie.payment.infrastructure.controller.dto.PaymentDto;
@@ -28,15 +26,14 @@ import static com.billetterie.payment.domain.PaymentStatus.*;
 @RestController
 @RequestMapping(PaymentController.PATH)
 @Slf4j
-public class PaymentController extends CommandController {
+public class PaymentController {
     private static final Logger LOGGER = LoggerFactory.getLogger(PaymentController.class);
 
     public static final String PATH = "/api/payment";
     private final PayAndTransformToOrder payAndTransformToOrder;
     private final TransformToOrder transformToOrder;
 
-    public PaymentController(CommandBusFactory commandBusFactory, PayAndTransformToOrder payAndTransformToOrder, TransformToOrder transformToOrder) {
-        super(commandBusFactory);
+    public PaymentController(PayAndTransformToOrder payAndTransformToOrder, TransformToOrder transformToOrder) {
         this.payAndTransformToOrder = payAndTransformToOrder;
         this.transformToOrder = transformToOrder;
     }
