@@ -20,18 +20,11 @@ public class PayAndTransformToOrder {
     }
 
     public PayAndTransformToOrderResult execute(String cartId, String cardNumber, String expirationDate, String cypher, float amount, String email) {
-        //TODO: call bank.pay with new Payment(cartId, cardNumber, expirationDate, cypher, amount, email)
+        //TODO: pay the order, see bank.pay(...)
 
-        //TODO: check if transaction isPending() then return
-        // PayAndTransformToOrderResult.pending(
-        //                    transaction.id(),
-        //                    transaction.redirectionUrl(),
-        //                    amount,
-        //                    email);
+        //TODO: check if transaction isPending() then return pending result, see PayAndTransformToOrderResult.pending(...)
 
-        //TODO: check if transaction NOT hasSucceeded() then return
-        // PayAndTransformToOrderResult.failed(
-        //                    transaction.id());
+        //TODO: check if transaction NOT hasSucceeded() then return failed, see PayAndTransformToOrderResult.failed(...)
 
         // we had 2 choices for the implementation:
         // a) call next use case transformToOrder.execute(transaction.id(), cartId, amount, email);
